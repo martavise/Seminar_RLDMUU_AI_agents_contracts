@@ -7,7 +7,7 @@ class PrincipalAgentMDP:
     PRINCIPAL: offers contract b, observes outcome, cannot see action
     AGENT: chooses action, observes state AND contract
     """
-    def __init__(self, gamma):
+    def __init__(self, gamma=1.0):
         self.n_states = 3  # s0=0, sL=1, sR=2 S = {s0, sL, sR})
         self.n_actions = 2  # 2 actions: left, right
         self.n_outcomes = 2 #L=0, R=1
