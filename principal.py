@@ -1,3 +1,9 @@
+import numpy as np
+
+from pulp import (
+    LpProblem, LpMaximize, LpVariable,
+    lpSum, PULP_CBC_CMD, value
+)
 class Principal: 
     """
     Principal learns which action a_p to induce and the optimal contract b.
@@ -29,6 +35,7 @@ class Principal:
         - mdp.P_outcome[s, a, o]: outcome distribution P(o | s, a)
         - mdp.T[s, o]: deterministic state transition s' = T(s, o)
     """
+
 
     def __init__(self, mdp, r_p, agents_policy, alpha, epsilon, b_grid_step=0.1): 
         self.mdp = mdp
@@ -119,9 +126,18 @@ class Principal:
         prob.solve(PULP_CBC_CMD(msg=0))
 
         if prob.status == 1:  # Optimal
-            return tuple(value(b[o]) for o in range(self.n_outcomes))
+            b_cont = np.array([value(b[o]) for o in range(self.n_outcomes)])
+
+            # snap to nearest grid value (IMPORTANT)
+            b_discrete = tuple(
+                min(self.b_values, key=lambda x: abs(x - b_cont[i]))
+                for i in range(self.n_outcomes)
+            )
+
+            return b_discrete
         else:
-            return None       
+            # fallback to safe contract
+            return tuple(0.0 for _ in range(self.n_outcomes))      
 
     def update(self, state, a_p, b, o, next_state):
         """
