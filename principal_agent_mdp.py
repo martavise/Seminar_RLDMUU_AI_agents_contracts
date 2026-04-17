@@ -37,6 +37,11 @@ class PrincipalAgentMDP:
         """
         probs = self.P_outcome[state, action]
         return np.random.choice(self.n_outcomes, p=probs)
+    
+    def R_agent(self, s, a, b, o):
+        """R(s,a,b,o) = r(s,a) + b(o)"""
+        r_sa = -4/5 if a == 0 else 0.0
+        return r_sa + b[o]
 
 
 if __name__ == "__main__":
