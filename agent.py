@@ -1,89 +1,75 @@
 import numpy as np
 
 class Agent:
-    
-    '''
-    initialisation of MDP with needed parameters and serialisation of contracts
-    '''
-    def __init__(self, mdp, alpha=0.1, epsilon=0.1, b_grid_step=0.1):
-        self.mdp = mdp
-        self.n_states = mdp.n_states
+    """
+    Agent in a Principal-Agent MDP.
+    Solves the inner optimization of the meta-algorithm:
+    given principal's policy rho, find best-responding pi*.
+    """
+    def __init__(self, mdp):
+        self.mdp       = mdp
+        self.n_states  = mdp.n_states
         self.n_actions = mdp.n_actions
         self.n_outcomes = mdp.n_outcomes
+        self.gamma     = mdp.gamma
+  
 
-        self.alpha = alpha
-        self.gamma = mdp.gamma
-        self.epsilon = epsilon
+        # these are set after solve() is called
+        self.V       = None   # V_agent[s]
+        self.Q_agent = None   # Q^pi((s,b), a | rho)
+        self.pi_star = None   # pi*(s, b) -> action
 
-        self.cost = np.array([0.1, 0.5])  # effort costs
+    def solve(self, rho, tol=1e-10, max_iter=1000):
+        """
+        Fix rho: s -> np.array([b(L), b(R)]) and solve agent's MDP
+        via value iteration.
 
-        self.b_values = np.round(np.arange(0, 1.01, b_grid_step), 3)
-        self.b_grid = self._build_contract_grid()
+        Sets self.V, self.Q_agent, self.pi_star
+        """
+        mdp = self.mdp
+        nS  = self.n_states
+        nA  = self.n_actions
+        V   = np.zeros(nS)
 
-        self.q = np.zeros((self.n_states, len(self.b_grid), self.n_actions))
+        # value iteration
+        for _ in range(max_iter):
+            V_new = np.zeros(nS)
+            for s in range(nS):
+                b = rho[s]
+                Q = np.zeros(nA)
+                for a in range(nA):
+                    for o in range(mdp.n_outcomes):
+                        p      = mdp.P_outcome[s, a, o]
+                        s_next = mdp.T(s, o)
+                        Q[a]  += p * (mdp.R_agent(s, a, b, o) + self.gamma * V[s_next])
+                V_new[s] = np.max(Q)
 
+            if np.max(np.abs(V - V_new)) < tol:
+                break
+            V = V_new
 
-    def _build_contract_grid(self):
-        grid = []
-        for bL in self.b_values:
-            for bR in self.b_values:
-                grid.append((bL, bR))
-        return grid
+        self.V = V
 
-    def contract_to_id(self, b):
-        b = np.array(b)
+        # Q^pi((s,b), a | rho) for arbitrary b at current state
+        # future states still use rho(s') — captured in V
+        def Q_agent(s, b, a):
+            q = 0.0
+            for o in range(mdp.n_outcomes):
+                p      = mdp.P_outcome[s, a, o]
+                s_next = mdp.T(s, o)
+                q     += p * (mdp.R_agent(s, a, b, o) + self.gamma * V[s_next])
+            return q
 
-        # snap each component to nearest grid value
-        snapped = tuple(
-            min(self.b_values, key=lambda x: abs(x - b[i]))
-            for i in range(len(b))
-        )
+        # pi*(s, b) = argmax_a Q^pi((s,b), a)
+        # ties broken in favor of principal (principal Q injected later if needed)
+        def pi_star(s, b):
+            Q_vals  = np.array([Q_agent(s, b, a) for a in range(nA)])
+            max_val = np.max(Q_vals)
+            tied    = np.where(np.abs(Q_vals - max_val) < 1e-9)[0]
+            return tied[0]
 
-        return self.b_grid.index(snapped)
-    '''
-    makes decision of action accordingly to state and contract, policy
-    '''
-    def act(self, state, b):
-        b_id = self.contract_to_id(b)
+        self.Q_agent = Q_agent
+        self.pi_star = pi_star
 
-        if np.random.rand() < self.epsilon:
-            return np.random.randint(self.n_actions)
-
-        return np.argmax(self.q[state, b_id])
-
-    '''
-    returns rewards as benefice of contract minus costs of action
-    '''
-    def compute_reward(self, s, a, o, b):
-        return -self.cost[a] + b[o]
-
-    def update(self, s, b, a, o, s_next, rho):
-        r_agent = self.compute_reward(s, a, o, b)
-
-        b_id = self.contract_to_id(b)
-
-        b_next = rho(s_next)
-        b_next_id = self.contract_to_id(b_next)
-
-        max_next = np.max(self.q[s_next, b_next_id])
-
-        # adapted Q-learning with contracts
-        target = r_agent + self.gamma * max_next
-        self.q[s, b_id, a] += self.alpha * (target - self.q[s, b_id, a])
-
-    '''
-    calculate the value of Q_bar
-    '''
-    def get_Q_bar(self, rho):
-        Q_bar = np.zeros((self.n_states, self.n_actions))
-
-        for s in range(self.n_states):
-            b = rho(s)
-            b_id = self.contract_to_id(b)
-            Q_bar[s] = self.q[s, b_id]
-
-        return Q_bar
+        return V, Q_agent, pi_star
     
-
-    def reset(self):
-        self.q = np.zeros_like(self.q)
