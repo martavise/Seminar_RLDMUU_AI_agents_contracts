@@ -1,3 +1,7 @@
+import numpy as np
+from itertools import product
+
+
 class PrincipalMeta:
     """
     Principal in a Principal-Agent MDP
@@ -19,9 +23,9 @@ class PrincipalMeta:
         self.Q = None
         self.rho_star = None
 
-    def solve(self, pi, tol=1e-4, max_iter=1000, snapshot_every=1):
+    def solve(self, agent, tol=1e-4, max_iter=1000, snapshot_every=1):
         """
-        Fix pi: solve principal's MDP via value iteration.
+        Principal's VI: for each contract b, compute agent's best response.
         """
         mdp = self.mdp
         V = {s: 0.0 for s in range(self.n_states)}
@@ -32,12 +36,11 @@ class PrincipalMeta:
             new_V = {}
 
             for s in range(self.n_states):
-                a = pi[s]
-
                 q_values = []
                 for b in self.contracts:
+                    a = agent.pi_star(s, np.array(b))  # ← INSIDE loop
                     q = sum(
-                        mdp.P_outcome[s, a, o] * (self.r_p[s, o] - b[o] + self.gamma * V[mdp.T[s, o]])
+                        mdp.P_outcome[s, a, o] * (self.r_p[s, o] - b[o] + self.gamma * V[mdp.T(s, o)])
                         for o in range(self.n_outcomes)
                     )
                     q_values.append(q)
@@ -49,15 +52,15 @@ class PrincipalMeta:
 
             rho_star = {}
             for s in range(self.n_states):
-                a = pi[s]
-                q_values = [
-                    sum(
-                        mdp.P_outcome[s, a, o] * (self.r_p[s, o] - b[o] + self.gamma * V[mdp.T[s, o]])
+                q_values = []
+                for b in self.contracts:
+                    a = agent.pi_star(s, np.array(b))  # ← INSIDE loop
+                    q = sum(
+                        mdp.P_outcome[s, a, o] * (self.r_p[s, o] - b[o] + self.gamma * V[mdp.T(s, o)])
                         for o in range(self.n_outcomes)
                     )
-                    for b in self.contracts
-                ]
-                rho_star[s] = self.contracts[int(np.argmax(q_values))]
+                    q_values.append(q)
+                rho_star[s] = np.array(self.contracts[int(np.argmax(q_values))])
 
             if it % snapshot_every == 0 or delta < tol:
                 snapshots.append((V.copy(), rho_star.copy(), delta, it))
@@ -68,5 +71,4 @@ class PrincipalMeta:
 
         self.V = V
         self.rho_star = rho_star
-
         return snapshots
