@@ -16,7 +16,8 @@ class PrincipalMeta:
         self.gamma = mdp.gamma
         self.r_p = r_p
         self.b_values = np.round(np.arange(0, 1.01, b_grid_step), 3)
-        self.contracts = list(product(self.b_values, repeat=self.n_outcomes))
+        # possible actions for principal are possible contracts he can offer 
+        self.contracts = list(product(self.b_values, repeat=self.n_outcomes)) 
         self.n_contracts = len(self.contracts)
 
         self.V = None
@@ -29,7 +30,7 @@ class PrincipalMeta:
         """
         mdp = self.mdp
         V = {s: 0.0 for s in range(self.n_states)}
-        snapshots = []
+        snapshots = [] # list of (V_copy, policy_copy, delta, iteration)
 
         for it in range(1, max_iter + 1):
             delta = 0.0
@@ -38,7 +39,8 @@ class PrincipalMeta:
             for s in range(self.n_states):
                 q_values = []
                 for b in self.contracts:
-                    a = agent.pi_star(s, np.array(b))  # ← INSIDE loop
+                    # get best responding action from agent 
+                    a = agent.pi_star(s, np.array(b))  # inner optimization loop
                     q = sum(
                         mdp.P_outcome[s, a, o] * (self.r_p[s, o] - b[o] + self.gamma * V[mdp.T(s, o)])
                         for o in range(self.n_outcomes)
@@ -50,6 +52,7 @@ class PrincipalMeta:
 
             V = new_V
 
+            # Extract greedy policy for principal 
             rho_star = {}
             for s in range(self.n_states):
                 q_values = []
