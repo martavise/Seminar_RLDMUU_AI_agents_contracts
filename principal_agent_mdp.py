@@ -42,6 +42,11 @@ class PrincipalAgentMDP:
         """R(s,a,b,o) = r(s,a) + b(o)"""
         r_sa = -4/5 if a == 0 else 0.0
         return r_sa + b[o]
+    
+    def R_principal(self, s, b, o):
+        """Rp(s,b,o) = rp(s,o) - b(o)"""
+        rp_so = 14/9 if o == 0 else 0.0
+        return rp_so - b[o]
 
 
 if __name__ == "__main__":
