@@ -46,6 +46,7 @@ class Principal:
         self.b_values = np.round(np.arange(0, 1.01, b_grid_step), 3)
         # scoreboard: q[state, action] = how good is it to induce this action here
         self.q = np.zeros((self.n_states, self.n_actions))
+        self._contract_cache = {}   # cache to make learning lighter
 
     def induce_action(self, state, agent_Q_bar):
         """
@@ -71,6 +72,11 @@ class Principal:
         The constraint says: taking a_p must be at least as good for the agent
         as taking any other action, given the payment offer.
         """
+        # cache key
+        key = (s, a_p, tuple(agent_Q_bar.flatten()))
+        if key in self._contract_cache:
+            return self._contract_cache[key]
+        
         mdp = self.mdp
 
         prob = LpProblem("Best_Contract", LpMaximize)
@@ -102,14 +108,17 @@ class Principal:
         if prob.status == 1:  # solution found
             b_cont = np.array([value(b[o]) for o in range(self.n_outcomes)])
             # round to nearest value on our payment grid
-            b_discrete = tuple(
+            result  = tuple(
                 min(self.b_values, key=lambda x: abs(x - b_cont[i]))
                 for i in range(self.n_outcomes)
             )
-            return b_discrete
         else:
             # if no solution found, offer zero payment
-            return tuple(0.0 for _ in range(self.n_outcomes))
+            result = tuple(0.0 for _ in range(self.n_outcomes))
+        
+        #caching
+        self._contract_cache[key] = result
+        return result
 
     def update(self, state, a_p, b, o, next_state):
         """
@@ -118,9 +127,12 @@ class Principal:
         the best future score, blended with the old score using alpha.
         """
         reward = self.r_p[state, o] - b[o]
-        target = reward + self.gamma * np.max(self.q[next_state, :])
+        # no future value at terminal states
+        future = 0.0 if self.mdp.is_terminal(next_state) else np.max(self.q[next_state, :])
+        target = reward + self.gamma * future
         self.q[state, a_p] += self.alpha * (target - self.q[state, a_p])
 
     def reset(self):
         # wipe the scoreboard back to zero
         self.q = np.zeros((self.n_states, self.n_actions))
+        self._contract_cache = {}

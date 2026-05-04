@@ -13,6 +13,7 @@ class PrincipalAgentMDP:
         self.n_outcomes = 2 #L=0, R=1
         self.s0 = 0  # s0 initial state
         self.gamma = gamma  # γ
+        self.terminal_states = [1,2]
         # P_outcomes[s, a, o] = probability of outcome o given state s and action a
         # same probabilities in every state
         #aL (0): L w.p. 0.9, R w.p. 0.1
@@ -29,6 +30,12 @@ class PrincipalAgentMDP:
         Same from any state.
         """
         return outcome + 1  # L(0)→1, R(1)→2
+    
+    def is_terminal(self, state):
+        """
+        Whether state is terminal — no further actions taken here.
+        """
+        return int(state) in self.terminal_states
 
     def sample_outcome(self, state, action):
         """
@@ -57,3 +64,4 @@ if __name__ == "__main__":
     o = mdp.sample_outcome(state=0, action=0)
     s_next = mdp.T(state=0, outcome=o)
     print(f"Outcome: {'L' if o==0 else 'R'}, Next state: {['s0','sL','sR'][s_next]}")
+    print(f"Is terminal: {mdp.is_terminal(s_next)}")
