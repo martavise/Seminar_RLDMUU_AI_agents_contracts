@@ -66,11 +66,10 @@ class Principal:
 
     def find_best_contract(self, s, a_p, agent_Q_bar, lowBound=0, upBound=1):
         """
-        Use LP to find the cheapest payment b = [b(L), b(R)]
-        that makes the agent prefer action a_p over all other actions.
+        Eq. 3: LP to find the cheapest contract that makes the agent prefer a_p.
 
-        The constraint says: taking a_p must be at least as good for the agent
-        as taking any other action, given the payment offer.
+        max_{b in B} E_{o~O(s,a_p)}[-b(o)]
+        s.t. E[b(o)|a_p] + Q_bar(s,a_p) >= E[b(o)|a] + Q_bar(s,a)  for all a
         """
         # cache key
         key = (s, a_p, tuple(agent_Q_bar.flatten()))
@@ -81,15 +80,12 @@ class Principal:
 
         prob = LpProblem("Best_Contract", LpMaximize)
 
-        # one payment variable per outcome: b(L) and b(R)
         b = [LpVariable(f"b_{o}", lowBound=lowBound, upBound=upBound)
              for o in range(self.n_outcomes)]
 
-        # objective: minimise the expected payment (principal pays as little as possible)
         prob += lpSum(-mdp.P_outcome[s, a_p, o] * b[o]
                      for o in range(self.n_outcomes))
 
-        # constraint: a_p must be at least as attractive as every other action
         for a in range(self.n_actions):
             if a == a_p:
                 continue
@@ -105,7 +101,7 @@ class Principal:
 
         prob.solve(PULP_CBC_CMD(msg=0))
 
-        if prob.status == 1:  # solution found
+        if prob.status == 1:
             b_cont = np.array([value(b[o]) for o in range(self.n_outcomes)])
             # round to nearest value on our payment grid
             result  = tuple(
