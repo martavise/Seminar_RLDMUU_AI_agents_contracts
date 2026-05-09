@@ -14,7 +14,10 @@ from pulp import (
 #       it represents its payoffs when optimally incentivizing the agent to take action a in state s
 
 # 2. grid step removed => continuous b_values in defined range [0,3] (LP)
-class Principal:
+
+# 3. agent_Q_bar is now a 1D array as an output from de QNetwork from the agent 
+
+class PrincipalDQ:
     """
     The principal learns two things:
       - which action it wants the agent to take (a_p)
