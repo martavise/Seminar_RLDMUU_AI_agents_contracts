@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from collections import deque
+import random 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

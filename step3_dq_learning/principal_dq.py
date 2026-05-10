@@ -1,6 +1,7 @@
 
 import numpy as np
 import torch
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 from pulp import (
     LpProblem, LpMaximize, LpVariable,
@@ -45,7 +46,8 @@ class PrincipalDQ:
         Line 4 Algorithm 2: Select an action to recommend a_p with q_theta via e-greedy
 
         """ 
-        state_tensor = torch.tensor(state, dtype=torch.float32)
+        state_tensor = torch.zeros(self.n_states, dtype=torch.float32).to(device)
+        state_tensor[state] = 1.0
         if np.random.rand() < self.epsilon:
             return np.random.randint(self.n_actions)   # explore
         return int(torch.argmax(q_theta(state_tensor)).item())  # exploit
