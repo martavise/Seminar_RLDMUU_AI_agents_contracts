@@ -96,12 +96,7 @@ class Principal:
         prob.solve(PULP_CBC_CMD(msg=0))
 
         if prob.status == 1:
-            b_cont = np.array([value(b[o]) for o in range(self.n_outcomes)])
-            b_discrete = tuple(
-                min(self.b_values, key=lambda x: abs(x - b_cont[i]))
-                for i in range(self.n_outcomes)
-            )
-            return b_discrete
+            return tuple(value(b[o]) for o in range(self.n_outcomes))
         else:
             return tuple(0.0 for _ in range(self.n_outcomes))
 
