@@ -20,13 +20,22 @@ class AgentMeta:
 
         V = np.zeros(nS)
 
+        # Set terminal states to 0 (no future value)
+        for s in range(nS):
+            if mdp.is_terminal(s):
+                V[s] = 0.0
+
         # ----------------------------
         # VALUE ITERATION (AGENT)
         # ----------------------------
         for _ in range(max_iter):
             V_new = np.zeros(nS)
 
+            # Terminal states stay 0
             for s in range(nS):
+                if mdp.is_terminal(s):
+                    V_new[s] = 0.0
+                    continue
 
                 b = rho[s]  # contract at state s
 

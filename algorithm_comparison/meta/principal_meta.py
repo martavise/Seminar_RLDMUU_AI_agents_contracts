@@ -36,6 +36,10 @@ class PrincipalMeta:
         # STEP 2: INITIALIZE PRINCIPAL VALUE FUNCTION
         # =================================================
         V = np.zeros(nS)
+        # Set terminal states to 0
+        for s in range(nS):
+            if mdp.is_terminal(s):
+                V[s] = 0.0
         rho = {s: np.zeros(self.n_outcomes) for s in range(nS)}
 
         # =================================================
@@ -49,6 +53,12 @@ class PrincipalMeta:
             delta = 0.0
 
             for s in range(nS):
+
+                # Terminal states stay 0 with zero contract
+                if mdp.is_terminal(s):
+                    V_new[s] = 0.0
+                    rho_new[s] = np.zeros(self.n_outcomes)
+                    continue
 
                 best_val = -np.inf
                 best_b = None
