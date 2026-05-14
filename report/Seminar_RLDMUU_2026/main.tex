@@ -128,14 +128,15 @@ Orchestrating AI Agents with Contracts
 Recent advances in artificial intelligence have led to the increasing deployment of autonomous AI agents in environments where decision-making, coordination, and incentive alignment play a central role. 
 As these systems become more complex and autonomous, understanding how to design incentives that guide agent behaviour toward desired outcomes becomes an important research challenge.
 
-A natural framework for studying such interactions is provided by principal-agent theory, a branch of economic contract theory that investigates how a principal can incentivize a self-interested agent through contracts and reward structures.
-Combining this perspective with reinforcement learning allows the study of adaptive agents operating in sequential decision-making environments.
+A natural framework for studying such interactions is provided by principal-agent theory, a branch of economic contract theory that investigates how a principal can incentivize a self-interested agent through contracts and reward structures. Combined with reinforcement learning, this framework allows the study of adaptive agents operating in sequential decision-making environments.
 
-In this work, we study the framework introduced by \cite{ivanov2024principal}, where a principal interacts with a reinforcement learning agent by dynamically offering contracts that shape the agent's reward function.
-The interaction is modeled as a sequential game formulated over a Markov Decision Process (MDP), and analyzed through game-theoretic equilibrium concepts such as Subgame Perfect Equilibrium (SPE).
+In this work, we study the framework introduced by \cite{ivanov2024principal}, where a principal and an agent interact through contracts within a Markov Decision Process (MDP).
+
+In the initial setting, both the principal and the agent have full knowledge of the underlying MDP, including the state space, transitions, outcomes, and reward structure. Under this assumption, the strategies of both parties are optimized iteratively until a Subgame Perfect Equilibrium (SPE) is reached.
 
 Our goal is twofold.
-First, we reproduce part of the experimental setup and results presented in the original paper in order to better understand the proposed learning dynamics and incentive mechanisms. In doing so we firstly reproduce a meta-algorithm, we then implement qlearning over it and finally use deep-Qlearning to regulate the behaviours.
+First, we reproduce part of the experimental setup and results presented in the original paper in order to better understand the proposed learning dynamics and incentive mechanisms. We first implement the proposed meta-algorithm in the fully observable setting, then extend it using Q-learning, and finally investigate a Deep Q-Learning approach where the underlying MDP is no longer assumed to be fully known. In this setting, policies are learned from sampled state transitions and rewards, which more closely reflects realistic reinforcement learning scenarios.
+
 Second, we extend the framework by investigating the use of linear contracts and analyzing how different contract structures influence the learning behaviour of the agent.
 
 The remainder of the paper is organized as follows.
@@ -145,6 +146,86 @@ Section~4 formalizes the problem and the MDP framework.
 Section~5 presents the learning algorithms used in our implementation.
 Finally, Sections~6 and~7 discuss the experimental results and their implications.
 
+% new structure Viola 
+\section{Problem Formulation}
+
+The principal-agent interaction is formulated as a Markov Decision Process (MDP). The environment is assumed to be fully known in the meta-algorithm setting, while in the Deep Q-Learning setting only sampled transitions and rewards are available.
+
+\subsection{Hidden-Action Principal-Agent MDP}
+
+The Principal-Agent MDP is defined as
+\begin{equation}
+M = (S, s_{0}, A, B, O, \mathcal{O}, \mathcal{R}, \mathcal{R^p}, \mathcal{T}, \gamma)
+\end{equation}
+
+Here, $S$ denotes the set of all states and $s_0 \in S$ the initial state. 
+$A$ represents the set of possible actions available to the agent, while $B$ denotes the set of actions of the principal. The actions of the principal correspond to contracts $b(o)$ offered depending on observable outcomes.
+
+The set of all possible outcomes is described by $O$. If the Agent executes an action $a \in A$, an outcome $o \in O$ is generated stochastically. This is modeled by the outcome function
+\[
+\mathcal{O}: S \times A \xrightarrow{} \Delta(O).
+\]
+
+Higher effort by the Agent can lead to better outcomes, although the results remain probabilistic rather than deterministic.
+
+Based on the observed outcome and the current state, the environment transitions into the next state:
+\[
+s' \sim \mathcal{T}(s,o),
+\]
+where
+\[
+\mathcal{T}: S \times O \xrightarrow{} \Delta(S)
+\]
+defines the transition function.
+
+The reward function of the agent is defined as
+\[
+\mathcal{R}(s,a,b,o) = r(s,a) + b(o),
+\]
+where $r(s,a)$ represents the intrinsic reward of the selected action and $b(o)$ the payment specified by the contract. The agent therefore aims to learn a strategy that maximizes its long-term reward.
+
+The reward of the Principal is defined by
+\[
+\mathcal{R}^{p}(s,b,o) = r^p(s,o) - b(o).
+\]
+The Principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
+
+The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
+
+The parameter $\gamma \in [0,1]$ denotes the discount factor, which determines the importance of future rewards compared to immediate rewards.
+
+\paragraph{Interaction Procedure}
+The interaction is modeled as a stochastic game in which both players aim to maximize their long-term rewards.
+
+In timestep $t$, the principal observes the current state $s_t$ and offers a contract $b_t$ according to its policy
+\[
+\rho: S \xrightarrow{} \Delta(B).
+\]
+
+The agent then observes the pair $(s_t, b_t)$ and selects an action according to its policy
+\[
+\pi: S \times B \xrightarrow{} \Delta(A).
+\]
+
+Based on the selected action, an outcome $o \in O$ is stochastically sampled according to the distribution of the results. The MDP then transitions to the next state $s_{t+1}$.
+
+This interaction is repeated sequentially, while both parties attempt to maximize their respective value functions over time.
+
+The solution of the stochastic game is described in Section~\ref{subsec: meta_algorithm}.
+
+\section{Algorithms}
+\subsection{Meta-algorithm}
+\subsection{Qlearning}
+\subsection{Deep Qlearning}
+\section{Results}
+\subsection{Replication of Original Results}
+\subsection{Application of linear contracts}
+
+\section{Discussion}
+
+\section*{Conclusion}
+
+% old structure: 
 \section{Related Work}
 \subsection{Contract Theory}
 \cite{dutting2019simple}
