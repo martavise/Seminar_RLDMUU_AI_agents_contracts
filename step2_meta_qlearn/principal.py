@@ -42,10 +42,11 @@ class Principal:
         self.alpha = alpha       # learning rate
         self.gamma = mdp.gamma   # discount factor
         self.epsilon = epsilon   # exploration rate
-        # grid of possible payment values: [0.0, 0.1, 0.2, ..., 1.0]
-        self.b_values = np.round(np.arange(0, 1.01, b_grid_step), 3)
+        # Use continuous payments [0,1] instead of grid to avoid IC violations
+        self.b_bounds = (0.0, 1.0)  # continuous bounds for LP
         # scoreboard: q[state, action] = how good is it to induce this action here
         self.q = np.zeros((self.n_states, self.n_actions))
+        self._contract_cache = {}   # cache to make learning lighter
 
     def induce_action(self, state, agent_Q_bar):
         """
@@ -70,6 +71,11 @@ class Principal:
         max_{b in B} E_{o~O(s,a_p)}[-b(o)]
         s.t. E[b(o)|a_p] + Q_bar(s,a_p) >= E[b(o)|a] + Q_bar(s,a)  for all a
         """
+        # cache key
+        key = (s, a_p, tuple(agent_Q_bar.flatten()))
+        if key in self._contract_cache:
+            return self._contract_cache[key]
+        
         mdp = self.mdp
 
         prob = LpProblem("Best_Contract", LpMaximize)
@@ -96,9 +102,15 @@ class Principal:
         prob.solve(PULP_CBC_CMD(msg=0))
 
         if prob.status == 1:
-            return tuple(value(b[o]) for o in range(self.n_outcomes))
+            # Return continuous optimal payments (no rounding)
+            b_opt = tuple(value(b[o]) for o in range(self.n_outcomes))
         else:
-            return tuple(0.0 for _ in range(self.n_outcomes))
+            # if no solution found, offer zero payment
+            b_opt = tuple(0.0 for _ in range(self.n_outcomes))
+        
+        # Cache the result
+        self._contract_cache[key] = b_opt
+        return b_opt
 
     def update(self, state, a_p, b, o, next_state):
         """
@@ -107,9 +119,12 @@ class Principal:
         the best future score, blended with the old score using alpha.
         """
         reward = self.r_p[state, o] - b[o]
-        target = reward + self.gamma * np.max(self.q[next_state, :])
+        # no future value at terminal states
+        future = 0.0 if self.mdp.is_terminal(next_state) else np.max(self.q[next_state, :])
+        target = reward + self.gamma * future
         self.q[state, a_p] += self.alpha * (target - self.q[state, a_p])
 
     def reset(self):
         # wipe the scoreboard back to zero
         self.q = np.zeros((self.n_states, self.n_actions))
+        self._contract_cache = {}
