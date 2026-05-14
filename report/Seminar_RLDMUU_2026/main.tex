@@ -1,4 +1,4 @@
-%%%%%%%%  EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+%%%%%%%% ICML 2026 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
 
 \documentclass{article}
 
@@ -125,8 +125,25 @@ Orchestrating AI Agents with Contracts
 
 \section*{Introduction}
 % TODO introduction of work and current state of art
-Moved by the curiosity of where the current growing usage of AI agents could lead to, this paper investigates their behaviour combining both elements coming from reinforcement learning and from economical principal-agent contract theory.  
-Inspired by the work done in \cite{ivanov2024principal}, our study wants to focus on the interaction between two elements: a principal and one AI agent working for him under contracts. 
+Recent advances in artificial intelligence have led to the increasing deployment of autonomous AI agents in environments where decision-making, coordination, and incentive alignment play a central role. 
+As these systems become more complex and autonomous, understanding how to design incentives that guide agent behaviour toward desired outcomes becomes an important research challenge.
+
+A natural framework for studying such interactions is provided by principal-agent theory, a branch of economic contract theory that investigates how a principal can incentivize a self-interested agent through contracts and reward structures.
+Combining this perspective with reinforcement learning allows the study of adaptive agents operating in sequential decision-making environments.
+
+In this work, we study the framework introduced by \cite{ivanov2024principal}, where a principal interacts with a reinforcement learning agent by dynamically offering contracts that shape the agent's reward function.
+The interaction is modeled as a sequential game formulated over a Markov Decision Process (MDP), and analyzed through game-theoretic equilibrium concepts such as Subgame Perfect Equilibrium (SPE).
+
+Our goal is twofold.
+First, we reproduce part of the experimental setup and results presented in the original paper in order to better understand the proposed learning dynamics and incentive mechanisms. In doing so we firstly reproduce a meta-algorithm, we then implement qlearning over it and finally use deep-Qlearning to regulate the behaviours.
+Second, we extend the framework by investigating the use of linear contracts and analyzing how different contract structures influence the learning behaviour of the agent.
+
+The remainder of the paper is organized as follows.
+Section~2 reviews the theoretical background on contract theory and reinforcement learning.
+Section~3 introduces the game-theoretic foundations of the principal-agent setting.
+Section~4 formalizes the problem and the MDP framework.
+Section~5 presents the learning algorithms used in our implementation.
+Finally, Sections~6 and~7 discuss the experimental results and their implications.
 
 \section{Related Work}
 \subsection{Contract Theory}
