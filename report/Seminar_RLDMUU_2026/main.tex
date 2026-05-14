@@ -152,7 +152,7 @@ Finally, Sections~6 and~7 discuss the experimental results and their implication
 The principal-agent interaction is formulated as a Markov Decision Process (MDP). The environment is assumed to be fully known in the meta-algorithm setting, while in the Deep Q-Learning setting only sampled transitions and rewards are available.
 
 \subsection{Hidden-Action Principal-Agent MDP}
-
+\label{subsec:MDP}
 The Principal-Agent MDP is defined as
 \begin{equation}
 M = (S, s_{0}, A, B, O, \mathcal{O}, \mathcal{R}, \mathcal{R^p}, \mathcal{T}, \gamma)
@@ -211,11 +211,113 @@ Based on the selected action, an outcome $o \in O$ is stochastically sampled acc
 
 This interaction is repeated sequentially, while both parties attempt to maximize their respective value functions over time.
 
-The solution of the stochastic game is described in Section~\ref{subsec: meta_algorithm}.
+The solution of the stochastic game is described in Section~\ref{subsec:meta_algorithm}.
+
+\subsection{Subgame Perfect Equilibrium}
+
+The interaction between the principal and the agent can be interpreted as a sequential stochastic game.
+At each timestep, the principal first proposes a contract, after which the agent selects an action in response to the offered incentives.
+Since decisions are made repeatedly over time and future states depend on previous actions and outcomes, the setting naturally fits the framework of dynamic game theory.
+
+In such sequential settings, a standard Nash Equilibrium is generally insufficient, since it only guarantees that no player has an incentive to deviate globally from its strategy.
+Instead, the appropriate solution concept is the Subgame Perfect Equilibrium (SPE), which requires that strategies remain optimal after every possible history of the game.
+
+Formally, an SPE is a strategy profile $(\rho^*, \pi^*)$ such that:
+\begin{itemize}
+    \item the principal policy $\rho^*$ maximizes the expected long-term utility of the principal,
+    \item the agent policy $\pi^*$ maximizes the expected long-term utility of the agent given the contracts offered by the principal,
+    \item neither player benefits from deviating at any reachable state of the stochastic game.
+\end{itemize}
+
+In the meta-algorithm, the principal and the agent iteratively update their strategies until convergence toward an SPE is achieved.
+The principal optimizes the offered contracts assuming a rational best response from the agent, while the agent optimizes its policy under the current contractual incentives.
+
+In the Q-learning extension, the same equilibrium structure is approximated through sampled interactions with the environment rather than complete knowledge of the MDP dynamics.
+Instead of computing exact optimal responses, both players learn their policies from observed rewards and transitions.
+Consequently, the learned policies approximate an SPE empirically through repeated interactions and value-function updates.
 
 \section{Algorithms}
 \subsection{Meta-algorithm}
+\label{subsec:meta_algorithm}
+
+
 \subsection{Qlearning}
+Starting from the setting defined in the meta-algorithm, we apply reinforcement learning to approximate the equilibrium through repeated interactions with the environment. The underlying MDP remains the same as the one described in Section~\ref{subsec:MDP}, but both the inner and outer optimization problems are now solved using Q-learning. \\
+The framework consists of two independent learners:
+the agent learns which action to execute under a given contract, while the principal learns which action to incentivize and which contract induces the desired behaviour at minimal cost.
+\paragraph{Agent Q-learning}
+
+The agent observes the current state $s$ together with the contract $b$ offered by the principal and learns a policy
+\[
+\pi : S \times B \rightarrow \Delta(A).
+\]
+Following \cite{ivanov2024principal}, the agent uses a truncated Q-function:
+\[
+Q^{*}((s,b),a) = \mathbb{E}[b(o)] + \bar{Q}(s,a),
+\]
+where $\bar{Q}(s,a)$ captures the long-term value of executing action $a$ in state $s$, independently of the current contract.
+The agent updates $\bar{Q}(s,a)$ using the standard Q-learning update rule:
+\[
+\begin{aligned}
+\bar{Q}(s,a)
+\leftarrow\;&
+\bar{Q}(s,a)
++
+\alpha
+\Big[
+r(s,a)
++
+\gamma \max_{a'} Q^{*}((s',b'),a')
+\\
+&-
+\bar{Q}(s,a)
+\Big].
+\end{aligned}
+\]
+Action selection is performed using an $\epsilon$-greedy exploration strategy.
+With probability $\epsilon$, a random action is selected, while otherwise the agent chooses the action with maximal estimated utility.
+
+\paragraph{Principal Q-learning}
+
+The principal simultaneously learns which action should be induced in each state.
+Instead of directly learning contracts, the principal maintains a Q-table
+\[
+Q^{p}(s,a^{p}),
+\]
+which estimates the expected long-term utility obtained when attempting to induce action $a^{p}$ in state $s$.
+
+At every timestep, the principal first selects a target action using an $\epsilon$-greedy policy over its Q-values.
+Given the selected target action, the principal then computes the cheapest feasible contract that incentivizes the agent to choose this action.
+
+The optimal contract is obtained by solving a linear program:
+\[
+\max_{b \in B}
+\mathbb{E}_{o \sim \mathcal{O}(s,a^{p})}[-b(o)],
+\]
+subject to incentive compatibility constraints ensuring that the agent prefers the intended action over all alternatives.
+
+After observing the resulting outcome and transition, the principal updates its Q-values according to
+\[
+\begin{aligned}
+Q^{p}(s,a^{p})
+\leftarrow\;&
+Q^{p}(s,a^{p})
++
+\alpha
+\Big[
+r^{p}(s,o)-b(o)
+\\
+&+
+\gamma \max_{a'} Q^{p}(s',a')
+-
+Q^{p}(s,a^{p})
+\Big].
+\end{aligned}
+\]
+
+Through repeated interactions, both learners adapt simultaneously:
+the agent improves its behavioural policy under contracts, while the principal learns how to design contracts that maximize its own long-term reward.
+
 \subsection{Deep Qlearning}
 \section{Results}
 \subsection{Replication of Original Results}
@@ -224,44 +326,37 @@ The solution of the stochastic game is described in Section~\ref{subsec: meta_al
 \section{Discussion}
 
 \section*{Conclusion}
+
 
 % old structure: 
-\section{Related Work}
-\subsection{Contract Theory}
-\cite{dutting2019simple}
-\subsection{Multi-Agent Reinforcement Learning}
+% \section{Related Work}
+% \subsection{Contract Theory}
+% \cite{dutting2019simple}
+% \subsection{Multi-Agent Reinforcement Learning}
+% % \subsection{Principal-Agent RL}
 
-% \subsection{Principal-Agent RL}
+% \section{Game-Theoretic Foundations}
+% \subsection{Principal-Agent Games}
+% \subsection{Subgame Perfect Equilibrium}
 
-
-\section{Game-Theoretic Foundations}
-\subsection{Principal-Agent Games}
-\subsection{Subgame Perfect Equilibrium}
-
-\section{Problem Formulation}
-
-\subsection{Principal}
-\subsection{Agent}
-\subsection{Contract Space}
-\subsection{MDP Formulation}
-\subsection{Reward Structure}
-\subsection{Equilibrium Concept (SPE)}
-
-\section{Algorithms presentation}
-\subsection{Meta-algorithm}
-\subsection{Qlearning}
-\subsection{Deep Qlearning}
-
-\section{Implementation}
+% \section{Problem Formulation}
+% \subsection{Principal}
+% \subsection{Agent}
+% \subsection{Contract Space}
+% \subsection{MDP Formulation}
+% \subsection{Reward Structure}
+% \subsection{Equilibrium Concept (SPE)}
 
 
-\section{Results}
-\subsection{Replication of Original Results}
-\subsection{Application of linear contracts}
+% \section{Implementation}
 
-\section{Discussion}
+% \section{Results}
+% \subsection{Replication of Original Results}
+% \subsection{Application of linear contracts}
 
-\section*{Conclusion}
+% \section{Discussion}
+
+% \section*{Conclusion}
 
 
 
