@@ -1,0 +1,513 @@
+%%%%%%%% ICML 2026 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs} % for professional tables
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2026} with \usepackage[nohyperref]{icml2026} above.
+\usepackage{hyperref}
+
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+%\usepackage{icml2026}
+
+% For preprint, use
+% \usepackage[preprint]{icml2026}
+
+% If accepted, instead use the following line for the camera-ready submission:
+ \usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Seminar RLDMUU spring semester 2026}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{Principal-Agent Reinforcement Learning: \\
+Orchestrating AI Agents with Contracts
+}
+
+  % It is OKAY to include author information, even for blind submissions: the
+  % style file will automatically remove it for you unless you've provided
+  % the [accepted] option to the icml2026 package.
+
+  % List of affiliations: The first argument should be a (short) identifier you
+  % will use later to specify author affiliations Academic affiliations
+  % should list Department, University, City, Region, Country Industry
+  % affiliations should list Company, City, Region, Country
+
+  % You can specify symbols, otherwise they are numbered in order. Ideally, you
+  % should not use this facility. Affiliations will be numbered in order of
+  % appearance and this is the preferred way.
+  \icmlsetsymbol{equal}{*}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Bustamante Isabelle}{Unifr}
+    \icmlauthor{Meier Viola}{Unibe}
+    \icmlauthor{Visetti Marta}{Unifr}
+
+  \end{icmlauthorlist}
+
+  \icmlaffiliation{Unifr}{Université de Fribourg, Switzerland}
+  \icmlaffiliation{Unibe}{Universität Bern, Switzerland}
+
+
+  \icmlcorrespondingauthor{Bustamante, Isabelle}{isabelle.bustamante@unifr.ch}
+  \icmlcorrespondingauthor{Visetti, Marta}{marta.visetti@unifr.ch}
+
+  % You may provide any keywords that you find helpful for describing your
+  % paper; these are used to populate the "keywords" metadata in the PDF but
+  % will not be shown in the document
+  \icmlkeywords{Machine Learning, ICML}
+
+  \vskip 0.3in
+]
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column listing the
+% affiliations and the copyright notice. The command takes one argument, which
+% is text to display at the start of the footnote. The \icmlEqualContribution
+% command is standard text for equal contribution. Remove it (just {}) if you
+% do not need this facility.
+
+% Use ONE of the following lines. DO NOT remove the command.
+% If you have no special notice, KEEP empty braces:
+\printAffiliationsAndNotice{}  % no special notice (required even if empty)
+% Or, if applicable, use the standard equal contribution text:
+% \printAffiliationsAndNotice{\icmlEqualContribution}
+
+\begin{abstract}
+    % TODO
+  This document provides a basic paper template and submission guidelines.
+  Abstracts must be a single paragraph, ideally between 4--6 sentences long.
+  Gross violations will trigger corrections at the camera-ready phase.
+\end{abstract}
+
+\section*{Introduction}
+% TODO introduction of work and current state of art
+Recent advances in artificial intelligence have led to the increasing deployment of autonomous AI agents in environments where decision-making, coordination, and incentive alignment play a central role. 
+As these systems become more complex and autonomous, understanding how to design incentives that guide agent behaviour toward desired outcomes becomes an important research challenge.
+
+A natural framework for studying such interactions is provided by principal-agent theory, a branch of economic contract theory that investigates how a principal can incentivize a self-interested agent through contracts and reward structures. Combined with reinforcement learning, this framework allows the study of adaptive agents operating in sequential decision-making environments.
+
+In this work, we study the framework introduced by \cite{ivanov2024principal}, where a principal and an agent interact through contracts within a Markov Decision Process (MDP).
+
+In the initial setting, both the principal and the agent have full knowledge of the underlying MDP, including the state space, transitions, outcomes, and reward structure. Under this assumption, the strategies of both parties are optimized iteratively until a Subgame Perfect Equilibrium (SPE) is reached.
+
+Our goal is twofold.
+First, we reproduce part of the experimental setup and results presented in the original paper in order to better understand the proposed learning dynamics and incentive mechanisms. We first implement the proposed meta-algorithm in the fully observable setting, then extend it using Q-learning, and finally investigate a Deep Q-Learning approach where the underlying MDP is no longer assumed to be fully known. In this setting, policies are learned from sampled state transitions and rewards, which more closely reflects realistic reinforcement learning scenarios.
+
+Second, we extend the framework by investigating the use of linear contracts and analyzing how different contract structures influence the learning behaviour of the agent.
+
+The remainder of the paper is organized as follows.
+Section~2 reviews the theoretical background on contract theory and reinforcement learning.
+Section~3 introduces the game-theoretic foundations of the principal-agent setting.
+Section~4 formalizes the problem and the MDP framework.
+Section~5 presents the learning algorithms used in our implementation.
+Finally, Sections~6 and~7 discuss the experimental results and their implications.
+
+% new structure Viola 
+\section{Problem Formulation}
+
+The principal-agent interaction is formulated as a Markov Decision Process (MDP). The environment is assumed to be fully known in the meta-algorithm setting, while in the Deep Q-Learning setting only sampled transitions and rewards are available.
+
+\subsection{Hidden-Action Principal-Agent MDP}
+\label{subsec:MDP}
+The Principal-Agent MDP is defined as
+\begin{equation}
+M = (S, s_{0}, A, B, O, \mathcal{O}, \mathcal{R}, \mathcal{R^p}, \mathcal{T}, \gamma)
+\end{equation}
+
+Here, $S$ denotes the set of all states and $s_0 \in S$ the initial state. 
+$A$ represents the set of possible actions available to the agent, while $B$ denotes the set of actions of the principal. The actions of the principal correspond to contracts $b(o)$ offered depending on observable outcomes.
+
+The set of all possible outcomes is described by $O$. If the Agent executes an action $a \in A$, an outcome $o \in O$ is generated stochastically. This is modeled by the outcome function
+\[
+\mathcal{O}: S \times A \xrightarrow{} \Delta(O).
+\]
+
+Higher effort by the Agent can lead to better outcomes, although the results remain probabilistic rather than deterministic.
+
+Based on the observed outcome and the current state, the environment transitions into the next state:
+\[
+s' \sim \mathcal{T}(s,o),
+\]
+where
+\[
+\mathcal{T}: S \times O \xrightarrow{} \Delta(S)
+\]
+defines the transition function.
+
+The reward function of the agent is defined as
+\[
+\mathcal{R}(s,a,b,o) = r(s,a) + b(o),
+\]
+where $r(s,a)$ represents the intrinsic reward of the selected action and $b(o)$ the payment specified by the contract. The agent therefore aims to learn a strategy that maximizes its long-term reward.
+
+The reward of the Principal is defined by
+\[
+\mathcal{R}^{p}(s,b,o) = r^p(s,o) - b(o).
+\]
+The Principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
+
+The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
+
+The parameter $\gamma \in [0,1]$ denotes the discount factor, which determines the importance of future rewards compared to immediate rewards.
+
+\paragraph{Interaction Procedure}
+The interaction is modeled as a stochastic game in which both players aim to maximize their long-term rewards.
+
+In timestep $t$, the principal observes the current state $s_t$ and offers a contract $b_t$ according to its policy
+\[
+\rho: S \xrightarrow{} \Delta(B).
+\]
+
+The agent then observes the pair $(s_t, b_t)$ and selects an action according to its policy
+\[
+\pi: S \times B \xrightarrow{} \Delta(A).
+\]
+
+Based on the selected action, an outcome $o \in O$ is stochastically sampled according to the distribution of the results. The MDP then transitions to the next state $s_{t+1}$.
+
+This interaction is repeated sequentially, while both parties attempt to maximize their respective value functions over time.
+
+The solution of the stochastic game is described in Section~\ref{subsec:meta_algorithm}.
+
+\subsection{Subgame Perfect Equilibrium}
+
+The interaction between the principal and the agent can be interpreted as a sequential stochastic game.
+At each timestep, the principal first proposes a contract, after which the agent selects an action in response to the offered incentives.
+Since decisions are made repeatedly over time and future states depend on previous actions and outcomes, the setting naturally fits the framework of dynamic game theory.
+
+In such sequential settings, a standard Nash Equilibrium is generally insufficient, since it only guarantees that no player has an incentive to deviate globally from its strategy.
+Instead, the appropriate solution concept is the Subgame Perfect Equilibrium (SPE), which requires that strategies remain optimal after every possible history of the game.
+
+Formally, an SPE is a strategy profile $(\rho^*, \pi^*)$ such that:
+\begin{itemize}
+    \item the principal policy $\rho^*$ maximizes the expected long-term utility of the principal,
+    \item the agent policy $\pi^*$ maximizes the expected long-term utility of the agent given the contracts offered by the principal,
+    \item neither player benefits from deviating at any reachable state of the stochastic game.
+\end{itemize}
+
+In the meta-algorithm, the principal and the agent iteratively update their strategies until convergence toward an SPE is achieved.
+The principal optimizes the offered contracts assuming a rational best response from the agent, while the agent optimizes its policy under the current contractual incentives.
+
+In the Q-learning extension, the same equilibrium structure is approximated through sampled interactions with the environment rather than complete knowledge of the MDP dynamics.
+Instead of computing exact optimal responses, both players learn their policies from observed rewards and transitions.
+Consequently, the learned policies approximate an SPE empirically through repeated interactions and value-function updates.
+
+\section{Algorithms}
+\subsection{Meta-algorithm}
+\label{subsec:meta_algorithm}
+
+
+\subsection{Qlearning}
+Starting from the setting defined in the meta-algorithm, we apply reinforcement learning to approximate the equilibrium through repeated interactions with the environment. The underlying MDP remains the same as the one described in Section~\ref{subsec:MDP}, but both the inner and outer optimization problems are now solved using Q-learning. \\
+The framework consists of two independent learners:
+the agent learns which action to execute under a given contract, while the principal learns which action to incentivize and which contract induces the desired behaviour at minimal cost.
+\paragraph{Agent Q-learning}
+
+The agent observes the current state $s$ together with the contract $b$ offered by the principal and learns a policy
+\[
+\pi : S \times B \rightarrow \Delta(A).
+\]
+Following \cite{ivanov2024principal}, the agent uses a truncated Q-function:
+\[
+Q^{*}((s,b),a) = \mathbb{E}[b(o)] + \bar{Q}(s,a),
+\]
+where $\bar{Q}(s,a)$ captures the long-term value of executing action $a$ in state $s$, independently of the current contract.
+The agent updates $\bar{Q}(s,a)$ using the standard Q-learning update rule:
+\[
+\begin{aligned}
+\bar{Q}(s,a)
+\leftarrow\;&
+\bar{Q}(s,a)
++
+\alpha
+\Big[
+r(s,a)
++
+\gamma \max_{a'} Q^{*}((s',b'),a')
+\\
+&-
+\bar{Q}(s,a)
+\Big].
+\end{aligned}
+\]
+Action selection is performed using an $\epsilon$-greedy exploration strategy.
+With probability $\epsilon$, a random action is selected, while otherwise the agent chooses the action with maximal estimated utility.
+
+\paragraph{Principal Q-learning}
+
+The principal simultaneously learns which action should be induced in each state.
+Instead of directly learning contracts, the principal maintains a Q-table
+\[
+Q^{p}(s,a^{p}),
+\]
+which estimates the expected long-term utility obtained when attempting to induce action $a^{p}$ in state $s$.
+
+At every timestep, the principal first selects a target action using an $\epsilon$-greedy policy over its Q-values.
+Given the selected target action, the principal then computes the cheapest feasible contract that incentivizes the agent to choose this action.
+
+The optimal contract is obtained by solving a linear program:
+\[
+\max_{b \in B}
+\mathbb{E}_{o \sim \mathcal{O}(s,a^{p})}[-b(o)],
+\]
+subject to incentive compatibility constraints ensuring that the agent prefers the intended action over all alternatives.
+
+After observing the resulting outcome and transition, the principal updates its Q-values according to
+\[
+\begin{aligned}
+Q^{p}(s,a^{p})
+\leftarrow\;&
+Q^{p}(s,a^{p})
++
+\alpha
+\Big[
+r^{p}(s,o)-b(o)
+\\
+&+
+\gamma \max_{a'} Q^{p}(s',a')
+-
+Q^{p}(s,a^{p})
+\Big].
+\end{aligned}
+\]
+
+Through repeated interactions, both learners adapt simultaneously:
+the agent improves its behavioural policy under contracts, while the principal learns how to design contracts that maximize its own long-term reward.
+
+\subsection{Deep Qlearning}
+\section{Results}
+\subsection{Replication of Original Results}
+\subsection{Application of linear contracts}
+
+\section{Discussion}
+
+\section*{Conclusion}
+
+
+% old structure: 
+% \section{Related Work}
+% \subsection{Contract Theory}
+% \cite{dutting2019simple}
+% \subsection{Multi-Agent Reinforcement Learning}
+% % \subsection{Principal-Agent RL}
+
+% \section{Game-Theoretic Foundations}
+% \subsection{Principal-Agent Games}
+% \subsection{Subgame Perfect Equilibrium}
+
+% \section{Problem Formulation}
+% \subsection{Principal}
+% \subsection{Agent}
+% \subsection{Contract Space}
+% \subsection{MDP Formulation}
+% \subsection{Reward Structure}
+% \subsection{Equilibrium Concept (SPE)}
+
+
+% \section{Implementation}
+
+% \section{Results}
+% \subsection{Replication of Original Results}
+% \subsection{Application of linear contracts}
+
+% \section{Discussion}
+
+% \section*{Conclusion}
+
+
+
+% In the unusual situation where you want a paper to appear in the
+% references without citing it in the main text, use \nocite
+\nocite{langley00}
+
+\bibliography{example_paper}
+\bibliographystyle{icml2026}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDIX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\appendix
+\onecolumn
+\section{You \emph{can} have an appendix here.}
+ATM it's just a buch of examples
+You can have as much text here as you want. The main body must be at most $8$
+pages long.
+
+The $\mathtt{\backslash onecolumn}$ command above can be kept in place if you
+prefer a one-column appendix, or can be removed if you prefer a two-column
+appendix.  Apart from this possible change, the style (font size, spacing,
+margins, page numbering, etc.) should be kept the same as the main body.
+
+
+
+% example formula/ thm
+\begin{definition}
+  \label{def:inj}
+  A function $f:X \to Y$ is injective if for any $x,y\in X$ different, $f(x)\ne
+    f(y)$.
+\end{definition}
+Using \cref{def:inj} we immediate get the following result:
+\begin{proposition}
+  If $f$ is injective mapping a set $X$ to another set $Y$,
+  the cardinality of $Y$ is at least as large as that of $X$
+\end{proposition}
+\begin{proof}
+  Left as an exercise to the reader.
+\end{proof}
+\cref{lem:usefullemma} stated next will prove to be useful.
+\begin{lemma}
+  \label{lem:usefullemma}
+  For any $f:X \to Y$ and $g:Y\to Z$ injective functions, $f \circ g$ is
+  injective.
+\end{lemma}
+\begin{theorem}
+  \label{thm:bigtheorem}
+  If $f:X\to Y$ is bijective, the cardinality of $X$ and $Y$ are the same.
+\end{theorem}
+An easy corollary of \cref{thm:bigtheorem} is the following:
+\begin{corollary}
+  If $f:X\to Y$ is bijective,
+  the cardinality of $X$ is at least as large as that of $Y$.
+\end{corollary}
+\begin{assumption}
+  The set $X$ is finite.
+  \label{ass:xfinite}
+\end{assumption}
+\begin{remark}
+  According to some, it is only the finite case (cf. \cref{ass:xfinite}) that
+  is interesting.
+\end{remark}
+
+
+
+% example figure
+\begin{figure}[ht]
+  \vskip 0.2in
+  \begin{center}
+    \centerline{\includegraphics[width=\columnwidth]{icml_numpapers}}
+    \caption{
+      Historical locations and number of accepted papers for International
+      Machine Learning Conferences (ICML 1993 -- ICML 2008) and International
+      Workshops on Machine Learning (ML 1988 -- ML 1992). At the time this
+      figure was produced, the number of accepted papers for ICML 2008 was
+      unknown and instead estimated.
+    }
+    \label{icml-historical}
+  \end{center}
+\end{figure}
+
+
+% example code snippet
+\begin{algorithm}[H]
+  \caption{Bubble Sort}
+  \label{alg:example}
+  \begin{algorithmic}
+    \STATE {\bfseries Input:} data $x_i$, size $m$
+    \REPEAT
+    \STATE Initialize $noChange = true$.
+    \FOR{$i=1$ {\bfseries to} $m-1$}
+    \IF{$x_i > x_{i+1}$}
+    \STATE Swap $x_i$ and $x_{i+1}$
+    \STATE $noChange = false$
+    \ENDIF
+    \ENDFOR
+    \UNTIL{$noChange$ is $true$}
+  \end{algorithmic}
+\end{algorithm}
+
+% example table
+\begin{table}[H]
+  \caption{Classification accuracies for naive Bayes and flexible
+    Bayes on various data sets.}
+  \label{sample-table}
+  \begin{center}
+    \begin{small}
+      \begin{sc}
+        \begin{tabular}{lcccr}
+          \toprule
+          Data set  & Naive         & Flexible      & Better?  \\
+          \midrule
+          Breast    & 95.9$\pm$ 0.2 & 96.7$\pm$ 0.2 & $\surd$  \\
+          Cleveland & 83.3$\pm$ 0.6 & 80.0$\pm$ 0.6 & $\times$ \\
+          Glass2    & 61.9$\pm$ 1.4 & 83.8$\pm$ 0.7 & $\surd$  \\
+          Credit    & 74.8$\pm$ 0.5 & 78.3$\pm$ 0.6 &          \\
+          Horse     & 73.3$\pm$ 0.9 & 69.7$\pm$ 1.0 & $\times$ \\
+          Meta      & 67.1$\pm$ 0.6 & 76.5$\pm$ 0.5 & $\surd$  \\
+          Pima      & 75.1$\pm$ 0.6 & 73.9$\pm$ 0.5 &          \\
+          Vehicle   & 44.9$\pm$ 0.6 & 61.5$\pm$ 0.4 & $\surd$  \\
+          \bottomrule
+        \end{tabular}
+      \end{sc}
+    \end{small}
+  \end{center}
+  \vskip -0.1in
+\end{table}
+
+
+
+%restatable
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+
+% This document was modified from the file originally made available by
+% Pat Langley and Andrea Danyluk for ICML-2K. This version was created
+% by Iain Murray in 2018, and modified by Alexandre Bouchard in
+% 2019 and 2021 and by Csaba Szepesvari, Gang Niu and Sivan Sabato in 2022.
+% Modified again in 2023 and 2024 by Sivan Sabato and Jonathan Scarlett.
+% Previous contributors include Dan Roy, Lise Getoor and Tobias
+% Scheffer, which was slightly modified from the 2010 version by
+% Thorsten Joachims & Johannes Fuernkranz, slightly modified from the
+% 2009 version by Kiri Wagstaff and Sam Roweis's 2008 version, which is
+% slightly modified from Prasad Tadepalli's 2007 version which is a
+% lightly changed version of the previous year's version by Andrew
+% Moore, which was in turn edited from those of Kristian Kersting and
+% Codrina Lauth. Alex Smola contributed to the algorithmic style files.
