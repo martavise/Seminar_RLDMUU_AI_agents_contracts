@@ -77,18 +77,18 @@ class Principal:
         b = [LpVariable(f"b_{o}", lowBound=lowBound, upBound=upBound)
              for o in range(self.n_outcomes)]
 
-        prob += lpSum(-mdp.P_outcome[s, a_p, o] * b[o]
+        prob += lpSum(-mdp.P_outcome[s, a_p, o] * b[o] # outcome distribution, exact probability of outcome o when the agent takes action a in state s, if agent takes action a_p, how likely is it to get outcome o?
                      for o in range(self.n_outcomes))
 
         for a in range(self.n_actions):
             if a == a_p:
                 continue
             prob += (
-                lpSum(mdp.P_outcome[s, a_p, o] * b[o]
+                lpSum(mdp.P_outcome[s, a_p, o] * b[o] # outcome distribution
                       for o in range(self.n_outcomes))
                 + agent_Q_bar[s, a_p]
                 >=
-                lpSum(mdp.P_outcome[s, a, o] * b[o]
+                lpSum(mdp.P_outcome[s, a, o] * b[o] # outcome distribution
                       for o in range(self.n_outcomes))
                 + agent_Q_bar[s, a]
             )
