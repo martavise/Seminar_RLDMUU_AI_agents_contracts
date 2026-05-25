@@ -146,6 +146,7 @@ Section~4 formalizes the problem and the MDP framework.
 Section~5 presents the learning algorithms used in our implementation.
 Finally, Sections~6 and~7 discuss the experimental results and their implications.
 
+Unless stated otherwise, all algorithms, equations, and theoretical definitions follow~\cite{ivanov2024principal}.
 % new structure Viola 
 \section{Problem Formulation}
 
@@ -318,7 +319,41 @@ Q^{p}(s,a^{p})
 Through repeated interactions, both learners adapt simultaneously:
 the agent improves its behavioural policy under contracts, while the principal learns how to design contracts that maximize its own long-term reward.
 
-\subsection{Deep Qlearning}
+\subsection{Deep Q-Learning}
+Building on the tabular Q-learning framework, we extended both learners to function approximation using Deep Q-Networks, described in Algorithm~\ref{alg:deep-q}. Following~\cite{ivanov2024principal}, this approach was introduced to 
+empirically validate the convergence of the meta-algorithm towards the SPE. 
+We used the underlying MDP unchanged to allow a direct comparison with the analytical SPE solution as well as the results from tabular Q-learning. In section~\ref{subsec:replication} we compare all algorithms on different MDP's with random outcome distribution. 
+The Q-tables are replaced by neural networks parametrized by $\theta$ (principal) and $\phi$ (agent). 
+
+\paragraph{Agent Deep Q-Learning}
+The agent's network $\bar{Q}^{\phi}(s,a)$ approximates the truncated 
+Q-values, so the expected long-term utility excluding the immediate payment, as described in the previous section.  The full Q-value is then recovered as
+\[
+Q^{*}((s,b),a) = \mathbb{E}_{o \sim \mathcal{O}(s,a)}[b(o)] 
++ \bar{Q}^{\phi}(s,a).
+\]
+To ensure that $\phi$ learns the truncated rather than the standard Q-function, the target $y^a$ is computed using the contract $b^*$ of the next state $s'$:
+\[
+y^{a}(s,a^{p}) = r^{a} + \gamma(1-d)
+\Bigl(
+\mathbb{E}_{o'}[b^{*}(s',a^{p'},o')]
++\bar{Q}^{\phi'}(s',a^{p'})
+\Bigr),
+\]
+where $o' \sim \mathcal{O}(s',a^{p'})$.
+
+\paragraph{Principal Deep Q-Learning}
+The principal's network $q^{\theta}(s,a^p)$ estimates the expected long-term utility of incentivizing action $a^p$ in state $s$. Given the selected target action, the optimal contract $b^*(s,a^p)$ is computed 
+by solving the LP.
+The target is then
+\[
+y^{p}(s,a^{p}) = r^{p} - b^{*}(s,a^{p},o)
++ \gamma(1-d)\,q^{\theta'}(s',a^{p'})
+\]
+
+\paragraph{Training Setup}
+Both networks consist of two hidden layers with 256 neurons and ReLU activations, and are trained simultaneously from a replay buffer of size 20\,000 with mini-batches of 128, following the suggestions of \cite{ivanov2024principal}.
+Target networks are updated every 100 iterations. The learning rate and exploration rate $\epsilon$ are annealed from $0.001$ to $0.0001$ and from $1$ to $0$, respectively.
 \section{Results}
 \subsection{Replication of Original Results}
 \subsection{Application of linear contracts}
@@ -376,6 +411,44 @@ the agent improves its behavioural policy under contracts, while the principal l
 \appendix
 \onecolumn
 \section{You \emph{can} have an appendix here.}
+\subsection{Deep Q-learning}
+\begin{algorithm}[H]
+  \caption{Deep Q-learning}
+  \label{alg:deep-q}
+  \begin{algorithmic}
+    \STATE \textbf{Require:} principal's Q-network $\theta$, agent's Q-network 
+    $\phi$, target networks $\theta'$ and $\phi'$, replay buffer $RB$
+    \STATE Initialize buffer $RB$ with random transitions, networks $\theta$ 
+    and $\phi$ with random parameters
+    \FOR{number of updates}
+      \FOR{number of interactions per update}
+        \STATE Select an action to recommend $a^p$ with $q^{\theta}(s,a)$ 
+        via $\epsilon$-greedy
+        \STATE Sample $o \sim \mathcal{O}(s,a)$,\; $r^a = r(s,a)$,\; 
+        $r^p = r^p(s,o)$,\; transition the MDP to $s' \sim \mathcal{T}(s,o)$
+        \STATE Add the transition $(s,\,a^p,\,r^a,\,r^p,\,o,\,d,\,s')$ 
+        to the buffer $RB$
+        \STATE If $d=1$, reset the MDP
+      \ENDFOR
+      \STATE Sample a mini-batch of transitions $mb \sim RB$
+      \FOR{$(s,\,a^p,\,r^a,\,r^p,\,o,\,d,\,s') \in mb$}
+        \STATE $a^{p'} = \arg\max_{a'}\, q^{\theta}(s',a')$
+        \STATE Find optimal contracts $b^*(s,a^p)$ and $b^*(s',a^{p'})$ 
+        by solving LP~(3)
+        \STATE $y^p(s,a^p) = r^p - b^*(s,a^p,o) 
+        + \gamma(1-d)\,q^{\theta'}(s',a^{p'})$
+        \STATE $y^a(s,a^p) = r^a + \gamma(1-d)
+        \Bigl(\mathbb{E}_{o' \sim \mathcal{O}(s',a^{p'})}\bigl[b^*(s',a^{p'},o')\bigr] 
+        + \bar{Q}^{\phi'}(s',a^{p'})\Bigr)$
+      \ENDFOR
+      \STATE Minimize $L(\theta) = 
+      \displaystyle\sum_{mb}\!\bigl(q^{\theta}(s,a^p)-y^p(s,a^p)\bigr)^2$
+      \STATE Minimize $L(\phi) = 
+      \displaystyle\sum_{mb}\!\bigl(\bar{Q}^{\phi}(s,a^p)-y^a(s,a^p)\bigr)^2$
+    \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+Algorithm from \cite{ivanov2024principal}, page 35.
 ATM it's just a buch of examples
 You can have as much text here as you want. The main body must be at most $8$
 pages long.
