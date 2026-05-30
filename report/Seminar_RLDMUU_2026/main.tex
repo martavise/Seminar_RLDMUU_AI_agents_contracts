@@ -191,7 +191,7 @@ The reward of the Principal is defined by
 \]
 The Principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
 
-The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
+The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modelled solely through the outcome.
 
 The parameter $\gamma \in [0,1]$ denotes the discount factor, which determines the importance of future rewards compared to immediate rewards.
 
@@ -223,7 +223,7 @@ Since decisions are made repeatedly over time and future states depend on previo
 In such sequential settings, a standard Nash Equilibrium is generally insufficient, since it only guarantees that no player has an incentive to deviate globally from its strategy.
 Instead, the appropriate solution concept is the Subgame Perfect Equilibrium (SPE), which requires that strategies remain optimal after every possible history of the game.
 
-Formally, an SPE is a strategy profile $(\rho^*, \pi^*)$ such that:
+Formally, in our setting, an SPE is a strategy profile $(\rho^*, \pi^*)$ such that:
 \begin{itemize}
     \item the principal policy $\rho^*$ maximizes the expected long-term utility of the principal,
     \item the agent policy $\pi^*$ maximizes the expected long-term utility of the agent given the contracts offered by the principal,
@@ -238,8 +238,24 @@ Instead of computing exact optimal responses, both players learn their policies 
 Consequently, the learned policies approximate an SPE empirically through repeated interactions and value-function updates.
 
 \section{Algorithms}
+\textbf{Environment}\\
+In a first setting, the implemented algorithms perform over a simple initialization of the hidden-action principal-agent MDP as presented in the paper \cite{ivanov2024principal}.  
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/simple_MDP.png}
+    \caption{Example of a principal-agent MDP, as in paper \cite{ivanov2024principal}}
+    \label{fig:placeholder}
+\end{figure}
+The MDP has three states $S=\{s_0,s_L,s_R\}$, at each the agent can chose between two actions $A=\{a_L,a_R\}$ who can lead to a specific outcome $O=\{L,R\}$. The distribution of outcome L taking action $a_L$ is of 0.9, while taking action $a_R$ it is of 0.1; while the distribution of outcome R is of 0.9 when taking action $a_R$ and of 0.1 when taking action $a_L$.\\ 
+Agent and principal have different rewards for a certain outcome at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while the agent has reward -$4\over5$ making it costly. At $(s,R)$ both the agent and the principal have reward $0$. 
+
 \subsection{Meta-algorithm}
 \label{subsec:meta_algorithm}
+The first implemented algorithm performs iteratively optimization over the policies of the agent and of the principal in their respective MDPs. Both actors have complete knowledge over the MDPs, meaning that they can access all their elements including transition and reward functions.\\
+The given name comes from the fact that the learning that would usually be applied during inner and outer optimizations is not yet specified, in our case we perform value iteration.
+
+
+Meta-algorithm converges to subgame-perfect equilibrium
 
 
 \subsection{Qlearning}
@@ -355,7 +371,8 @@ y^{p}(s,a^{p}) = r^{p} - b^{*}(s,a^{p},o)
 Both networks consist of two hidden layers with 256 neurons and ReLU activations, and are trained simultaneously from a replay buffer of size 20\,000 with mini-batches of 128, following the suggestions of \cite{ivanov2024principal}.
 Target networks are updated every 100 iterations. The learning rate and exploration rate $\epsilon$ are annealed from $0.001$ to $0.0001$ and from $1$ to $0$, respectively.
 \section{Results}
-\subsection{Replication of Original Results}
+\subsection{Replication of original results}
+\subsection{Performance over randomized MDPs}
 \subsection{Application of linear contracts}
 
 \section{Discussion}
@@ -410,7 +427,7 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 \newpage
 \appendix
 \onecolumn
-\section{You \emph{can} have an appendix here.}
+\section{Appendix}
 \subsection{Deep Q-learning}
 \begin{algorithm}[H]
   \caption{Deep Q-learning}
@@ -449,123 +466,22 @@ Target networks are updated every 100 iterations. The learning rate and explorat
   \end{algorithmic}
 \end{algorithm}
 Algorithm from \cite{ivanov2024principal}, page 35.
-ATM it's just a buch of examples
-You can have as much text here as you want. The main body must be at most $8$
-pages long.
+% ATM it's just a buch of examples
+% You can have as much text here as you want. The main body must be at most $8$
+% pages long.
 
-The $\mathtt{\backslash onecolumn}$ command above can be kept in place if you
-prefer a one-column appendix, or can be removed if you prefer a two-column
-appendix.  Apart from this possible change, the style (font size, spacing,
-margins, page numbering, etc.) should be kept the same as the main body.
-
-
-
-% example formula/ thm
-\begin{definition}
-  \label{def:inj}
-  A function $f:X \to Y$ is injective if for any $x,y\in X$ different, $f(x)\ne
-    f(y)$.
-\end{definition}
-Using \cref{def:inj} we immediate get the following result:
-\begin{proposition}
-  If $f$ is injective mapping a set $X$ to another set $Y$,
-  the cardinality of $Y$ is at least as large as that of $X$
-\end{proposition}
-\begin{proof}
-  Left as an exercise to the reader.
-\end{proof}
-\cref{lem:usefullemma} stated next will prove to be useful.
-\begin{lemma}
-  \label{lem:usefullemma}
-  For any $f:X \to Y$ and $g:Y\to Z$ injective functions, $f \circ g$ is
-  injective.
-\end{lemma}
-\begin{theorem}
-  \label{thm:bigtheorem}
-  If $f:X\to Y$ is bijective, the cardinality of $X$ and $Y$ are the same.
-\end{theorem}
-An easy corollary of \cref{thm:bigtheorem} is the following:
-\begin{corollary}
-  If $f:X\to Y$ is bijective,
-  the cardinality of $X$ is at least as large as that of $Y$.
-\end{corollary}
-\begin{assumption}
-  The set $X$ is finite.
-  \label{ass:xfinite}
-\end{assumption}
-\begin{remark}
-  According to some, it is only the finite case (cf. \cref{ass:xfinite}) that
-  is interesting.
-\end{remark}
+% The $\mathtt{\backslash onecolumn}$ command above can be kept in place if you
+% prefer a one-column appendix, or can be removed if you prefer a two-column
+% appendix.  Apart from this possible change, the style (font size, spacing,
+% margins, page numbering, etc.) should be kept the same as the main body.
 
 
 
-% example figure
-\begin{figure}[ht]
-  \vskip 0.2in
-  \begin{center}
-    \centerline{\includegraphics[width=\columnwidth]{icml_numpapers}}
-    \caption{
-      Historical locations and number of accepted papers for International
-      Machine Learning Conferences (ICML 1993 -- ICML 2008) and International
-      Workshops on Machine Learning (ML 1988 -- ML 1992). At the time this
-      figure was produced, the number of accepted papers for ICML 2008 was
-      unknown and instead estimated.
-    }
-    \label{icml-historical}
-  \end{center}
-\end{figure}
-
-
-% example code snippet
-\begin{algorithm}[H]
-  \caption{Bubble Sort}
-  \label{alg:example}
-  \begin{algorithmic}
-    \STATE {\bfseries Input:} data $x_i$, size $m$
-    \REPEAT
-    \STATE Initialize $noChange = true$.
-    \FOR{$i=1$ {\bfseries to} $m-1$}
-    \IF{$x_i > x_{i+1}$}
-    \STATE Swap $x_i$ and $x_{i+1}$
-    \STATE $noChange = false$
-    \ENDIF
-    \ENDFOR
-    \UNTIL{$noChange$ is $true$}
-  \end{algorithmic}
-\end{algorithm}
-
-% example table
-\begin{table}[H]
-  \caption{Classification accuracies for naive Bayes and flexible
-    Bayes on various data sets.}
-  \label{sample-table}
-  \begin{center}
-    \begin{small}
-      \begin{sc}
-        \begin{tabular}{lcccr}
-          \toprule
-          Data set  & Naive         & Flexible      & Better?  \\
-          \midrule
-          Breast    & 95.9$\pm$ 0.2 & 96.7$\pm$ 0.2 & $\surd$  \\
-          Cleveland & 83.3$\pm$ 0.6 & 80.0$\pm$ 0.6 & $\times$ \\
-          Glass2    & 61.9$\pm$ 1.4 & 83.8$\pm$ 0.7 & $\surd$  \\
-          Credit    & 74.8$\pm$ 0.5 & 78.3$\pm$ 0.6 &          \\
-          Horse     & 73.3$\pm$ 0.9 & 69.7$\pm$ 1.0 & $\times$ \\
-          Meta      & 67.1$\pm$ 0.6 & 76.5$\pm$ 0.5 & $\surd$  \\
-          Pima      & 75.1$\pm$ 0.6 & 73.9$\pm$ 0.5 &          \\
-          Vehicle   & 44.9$\pm$ 0.6 & 61.5$\pm$ 0.4 & $\surd$  \\
-          \bottomrule
-        \end{tabular}
-      \end{sc}
-    \end{small}
-  \end{center}
-  \vskip -0.1in
-\end{table}
 
 
 
-%restatable
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
