@@ -118,9 +118,7 @@ Orchestrating AI Agents with Contracts
 
 \begin{abstract}
     % TODO
-  This document provides a basic paper template and submission guidelines.
-  Abstracts must be a single paragraph, ideally between 4--6 sentences long.
-  Gross violations will trigger corrections at the camera-ready phase.
+
 \end{abstract}
 
 \section*{Introduction}
@@ -243,7 +241,7 @@ Consequently, the learned policies approximate an SPE empirically through repeat
 In a first setting, the implemented algorithms perform over a simple initialization of the hidden-action principal-agent MDP as presented in the paper \cite{ivanov2024principal}.The stochastic game is modeled as an infinite-horizon discounted interaction. 
 \begin{figure} [H]
     \centering
-    \includegraphics[width=0.9\linewidth]{figures/simple_MDP.png}
+    \includegraphics[width=0.8\linewidth]{figures/simple_MDP.png}
     \caption{Example of a principal-agent MDP, as in paper \cite{ivanov2024principal}}
     \label{fig:placeholder}
 \end{figure}
@@ -374,47 +372,101 @@ Both networks consist of two hidden layers with 256 neurons and ReLU activations
 Target networks are updated every 100 iterations. The learning rate and exploration rate $\epsilon$ are annealed from $0.001$ to $0.0001$ and from $1$ to $0$, respectively.
 
 
-\section{Results}
+\section{Results and discussion}
 \subsection{Replication of original results}
-
+% TODO
 \subsection{Performance over randomized MDPs}
+\label{subsec:replication}
 To further evaluate our implementation, we extend the experimental setting and perform additional empirical evaluations. In particular, we investigate the learning quality of the proposed algorithms. We compare the learning-based approaches (Q-learning and Deep Q-learning) against the value-iteration meta-algorithm, which serves as an oracle baseline.\\
 The comparison is conducted over 100 randomly generated MDPs. Each MDP shares the same structure as the one presented in Section~\ref{sec:simple}, while the transition probabilities are randomized independently for every experiment instance. More precisely, the outcome probabilities are sampled from a Dirichlet distribution for each state-action pair.\\
 For each randomized MDP, both the oracle method and the learning-based algorithms optimize the principal's policy. From these runs, we extract the induced policies, the principal's expected utility, and the corresponding regret, computed with respect to the oracle solution.
 
 
-The \textbf{Q-learning experiments }are run with the following hyperparameters. We consider $N_{\mathrm{MDP}} = 100$ independent MDP instances to average performance across environments and reduce variance. The discount factor is set to $\gamma = 1$, implying no temporal discounting and equal weighting of future and immediate rewards. Each experiment consists of $N_{\mathrm{META}} = 20$ meta-iterations, where each iteration corresponds to a full round of training the principal-agent interaction. Within each meta-iteration, the learning process is carried out over $N_{\mathrm{EPISODES}} = 5000$ episodes. The learning rate for Q-updates is set to $\alpha = 0.1$, and an $\epsilon$-greedy exploration strategy is used with $\epsilon = 0.1$ to balance exploration and exploitation for both the principal and the agent.
-\begin{figure}[H]
+The \textbf{Q-learning experiments }are run with the following hyperparameters. We consider $N_{\mathrm{MDP}} = 100$ independent MDP instances to average performance across environments and reduce variance. The discount factor is set to $\gamma = 1$, implying no temporal discounting and equal weighting of future and immediate rewards. Each experiment consists of $N_{\mathrm{META}} = 20$ meta-iterations, where each iteration corresponds to a full round of training the principal-agent interaction. Within each meta-iteration, the learning process is carried out over $N_{\mathrm{EPISODES}} = 5000$ episodes. The learning rate for Q-updates is set to $\alpha = 0.1$, and an $\epsilon$-greedy exploration strategy is used with $\epsilon = 0.1$ to balance exploration and exploitation for both the principal and the agent.\\
+In the conditions of the experiment, Q-learning is performing well, the SPE utility matches almost always the oracle one, the mean of the Q-Learning utility has a negative difference of less than 0.03 compared to the oracle one and the mean regret found is of the $2.75\%$, as one can compare with Table~\ref{tab:utility_regret} and Appendix~\ref{app:qlearn100}.
+\begin{table}[H]
 \centering
+\begin{tabular}{lcc}
+\hline
+\textbf{Metric} & \textbf{Mean} & \textbf{Std} \\
+\hline
+Oracle utility & 0.8033 & 0.2840 \\
+QL utility    & 0.7757 & 0.2938 \\
+Regret        & 0.0275 & 0.1424 \\
+Regret \%     & 2.75\% & -- \\
+\hline
+\end{tabular}
+\caption{Summary statistics of utility and regret metrics for Q-learning evaluation}
+\label{tab:utility_regret}
+\end{table}
 
-\IfFileExists{figures/policies_100Qlearn.png}{%
-  \includegraphics[width=0.8\linewidth]{figures/policies_100Qlearn.png}
-}{%
-  \todofig{Place figures/policies\_100Qlearn.pn here.}
-}
-
-\vspace{0.5em}
-
-\IfFileExists{figures/utilitydistr_100qlearn.png}{%
-  \includegraphics[width=0.8\linewidth]{figures/utilitydistr_100qlearn.png}
-}{%
-  \todofig{Place figures/utilitydistr_100qlearn.png here.}
-}
-\vspace{0.5em}
-
-\IfFileExists{figures/regretdistr_100qlearn.png}{%
-  \includegraphics[width=0.8\linewidth]{figures/regretdistr_100qlearn.png}
-}{%
-  \todofig{Place figures/regretdistr_100qlearn.png here.}
-}
-\caption{Comparison between oracle and Q-learning}
-\label{fig:single}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/cumulative_regret_100_run_qlearn.png}
+    \caption{Cumulative regret for Q-learning experiment}
+    \label{fig:cumulativeqlearn}
 \end{figure}
+
+To further investigate \textbf{Q-learning, we repeat the pipeline while allowing the agent’s learned Q-function to be transferred across consecutive MDP instances}. The resulting performance is reported in Appendix~\ref{app:qlearnknow}. Interestingly, this setup can lead to slightly negative regret in some cases. This effect is explained by the fact that the Q-learning pipeline retains information across environments, whereas the oracle baseline recomputes the optimal solution independently for each MDP. Consequently, when consecutive MDPs exhibit similar structural patterns, the learning procedure may benefit from implicit transfer, yielding a marginal advantage over the fully re-initialized oracle comparison. This is reflected in a lower general regret in comparison with the previous Q-learning experiment and is quite noticeable in the patterns generated over the cumulative regret, where instead of finding some plateaus, we have some descending trends.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\hline
+\textbf{Metric} & \textbf{Mean} & \textbf{Std} \\
+\hline
+Oracle utility & 0.8309 & 0.2688 \\
+QL utility    & 0.8155 & 0.2911 \\
+Regret        & 0.0154 & 0.0912 \\
+Regret \%     & 2.08\% & -- \\
+\hline
+\end{tabular}
+\caption{Summary statistics of utility and regret metrics for Q-learning with transmission of knowledge evaluation}
+\label{tab:knows}
+\end{table}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/cumulative_knowl.png}
+    \caption{Cumulative regret for Q-learning with transfer of knowledge experiment}
+    \label{fig:cumulativeknowledge}
+\end{figure}
+
+The \textbf{Deep Q-learning experiments} are conducted under the same randomized MDP setting described above. We evaluate performance across $N_{\mathrm{MDP}} = 100$ independent environments, with discount factor $\gamma = 1$, ensuring that all future rewards are weighted equally.\\
+Both the principal and the agent are trained using Deep Q-networks as described in Algorithm~\ref{alg:deep-q}. Training is performed over $20{,}000$ updates with experience replay, and policies are learned from sampled interactions rather than full knowledge of the environment dynamics.\\
+Compared to the tabular setting, function approximation introduces additional instability, making convergence to the Subgame Perfect Equilibrium more challenging in this regime.\\
+The resulting performance is summarized in Table~\ref{tab:dqtable}. Unlike Q-learning, Deep Q-learning exhibits significantly higher variance and a substantial degradation in principal utility, suggesting that function approximation breaks the delicate coordination required by the contract structure. The observed degradation in Deep Q-learning is due to the simplicity of the underlying MDP, but one can imagine that is also due to the interaction between function approximation and the bilevel structure of the problem. Although the environment is shallow and admits near-tabular optimal policies, the presence of a principal-agent coupling introduces a non-stationary learning target. In this regime, small estimation errors in early training phases can propagate through the contract optimization step, leading to unstable incentives and, in some cases, policy collapse with significantly negative utility.
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\hline
+\textbf{Metric} & \textbf{Mean} & \textbf{Std} \\
+\hline
+Oracle utility & 0.8110 & 0.2656 \\
+QL utility    & 0.4642 & 0.7051 \\
+Regret        & 0.3468 & 0.7059 \\
+Regret \%     & 42.44\% & -- \\
+\hline
+\end{tabular}
+\caption{Summary statistics of utility and regret metrics for deep Q-learning evaluation}
+\label{tab:dqtable}
+\end{table}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/cumulative_regr_ql.png}
+    \caption{Cumulative regret for deep Q-learning experiment}
+    \label{fig:regretql}
+\end{figure}
+Despite the higher regret, the cumulative regret curves exhibit more pronounced plateau regions in the Deep Q-learning setting. This suggests that the learned policies tend to stabilize early in training and remain in suboptimal regions of the policy space, likely due to the combined effects of function approximation and reduced exploration. In contrast to tabular Q-learning, which continues to exhibit small corrective updates over time, Deep Q-learning appears to converge prematurely to locally stable but suboptimal incentive structures induced by the bilevel optimization loop.
+
+
 
 
 \subsection{Application of linear contracts}
 
-\section{Discussion}
+
+
 
 \section*{Conclusion}
 
@@ -524,8 +576,36 @@ The source code for the implementation presented in this report is available on 
       \displaystyle\sum_{mb}\!\bigl(\bar{Q}^{\phi}(s,a^p)-y^a(s,a^p)\bigr)^2$
     \ENDFOR
   \end{algorithmic}
+  \label{alg:deep-q}
 \end{algorithm}
 Algorithm from \cite{ivanov2024principal}, page 35.
+
+\subsection{Results of evaluation of Q-Learning over 100 MDPs}
+\label{app:qlearn100}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/result_100_run_meta_qlearn.png}
+    \caption{SPE comparison, pricipal utility and regret comparison between oracle and Q-learning}
+    \label{fig:graphs100qlearn}
+\end{figure}
+
+
+\subsection{Results of evaluation of Q-Learning with transmission of knowledge}
+\label{app:qlearnknow}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/qlearning_policytransmitted.png}
+    \caption{SPE comparison, pricipal utility and regret comparison between oracle and Q-learning with transmission of knowledge}
+    \label{fig:graphs100knowledge}
+\end{figure}
+
+\subsection{Results of evaluation of deep Q-learning over 100 MDPs}
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/deepq_vsoracle.png}
+    \caption{SPE comparison, pricipal utility and regret comparison between oracle and deep Q-learning}
+    \label{fig:graphsdeepq}
+\end{figure}
 % ATM it's just a buch of examples
 % You can have as much text here as you want. The main body must be at most $8$
 % pages long.
