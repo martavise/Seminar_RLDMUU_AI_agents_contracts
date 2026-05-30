@@ -191,7 +191,7 @@ The reward of the Principal is defined by
 \]
 The Principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
 
-The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modelled solely through the outcome.
+The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
 
 The parameter $\gamma \in [0,1]$ denotes the discount factor, which determines the importance of future rewards compared to immediate rewards.
 
@@ -239,24 +239,25 @@ Consequently, the learned policies approximate an SPE empirically through repeat
 
 \section{Algorithms}
 \textbf{Environment}\\
-In a first setting, the implemented algorithms perform over a simple initialization of the hidden-action principal-agent MDP as presented in the paper \cite{ivanov2024principal}.  
+In a first setting, the implemented algorithms perform over a simple initialization of the hidden-action principal-agent MDP as presented in the paper \cite{ivanov2024principal}.The stochastic game is modeled as an infinite-horizon discounted interaction. 
 \begin{figure} [H]
     \centering
     \includegraphics[width=0.9\linewidth]{figures/simple_MDP.png}
     \caption{Example of a principal-agent MDP, as in paper \cite{ivanov2024principal}}
     \label{fig:placeholder}
 \end{figure}
-The MDP has three states $S=\{s_0,s_L,s_R\}$, at each the agent can chose between two actions $A=\{a_L,a_R\}$ who can lead to a specific outcome $O=\{L,R\}$. The distribution of outcome L taking action $a_L$ is of 0.9, while taking action $a_R$ it is of 0.1; while the distribution of outcome R is of 0.9 when taking action $a_R$ and of 0.1 when taking action $a_L$.\\ 
-Agent and principal have different rewards for a certain outcome at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while the agent has reward -$4\over5$ making it costly. At $(s,R)$ both the agent and the principal have reward $0$. 
+The MDP has three states $S=\{s_0,s_L,s_R\}$, at each the agent can chose between two actions $A=\{a_L,a_R\}$ who can lead to a specific outcome $O=\{L,R\}$. The distribution of outcome L taking action $a_L$ is of 0.9, while taking action $a_R$ it is of 0.1; the distribution of outcome R is of 0.9 when taking action $a_R$ and of 0.1 when taking action $a_L$.\\ 
+Agent and principal have different rewards for a certain outcome at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while the agent has reward -$4\over5$ making it costly for the agent but beneficial for the principal. At $(s,R)$ both the agent and the principal have reward $0$. 
 
 \subsection{Meta-algorithm}
 \label{subsec:meta_algorithm}
-The first implemented algorithm performs iteratively optimization over the policies of the agent and of the principal in their respective MDPs. Both actors have complete knowledge over the MDPs, meaning that they can access all their elements including transition and reward functions.\\
-The given name comes from the fact that the learning that would usually be applied during inner and outer optimizations is not yet specified, in our case we perform value iteration.
-
-
-Meta-algorithm converges to subgame-perfect equilibrium
-
+The first implemented approach follows the meta-algorithm proposed in \cite{ivanov2024principal}.
+The method performs an iterative bilevel optimization over the policies of both the principal and the agent within the principal-agent MDP introduced in Section~\ref{subsec:MDP}.\\
+In this setting, both actors are assumed to have complete knowledge of the environment, including the transition dynamics, outcome distributions, and reward functions. Under this assumption, optimal policies can be computed exactly using dynamic programming methods. In our implementation, both the inner and outer optimization problems are solved using value iteration.\\
+The algorithm alternates between two optimization steps.
+In the inner optimization, the agent computes a best-response policy maximizing its expected long-term utility under the currently offered contracts.
+In the outer optimization, the principal computes contracts that maximize its own expected utility while incentivizing the agent to follow the desired behaviour.\\
+This iterative process continues until the policies of both players stabilize. The resulting strategy profile approximates a Subgame Perfect Equilibrium (SPE), in which neither the principal nor the agent has an incentive to deviate at any reachable state of the stochastic game. 
 
 \subsection{Qlearning}
 Starting from the setting defined in the meta-algorithm, we apply reinforcement learning to approximate the equilibrium through repeated interactions with the environment. The underlying MDP remains the same as the one described in Section~\ref{subsec:MDP}, but both the inner and outer optimization problems are now solved using Q-learning. \\
@@ -372,7 +373,9 @@ Both networks consist of two hidden layers with 256 neurons and ReLU activations
 Target networks are updated every 100 iterations. The learning rate and exploration rate $\epsilon$ are annealed from $0.001$ to $0.0001$ and from $1$ to $0$, respectively.
 \section{Results}
 \subsection{Replication of original results}
+
 \subsection{Performance over randomized MDPs}
+
 \subsection{Application of linear contracts}
 
 \section{Discussion}
@@ -428,6 +431,9 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 \appendix
 \onecolumn
 \section{Appendix}
+\subsection{Source code}
+The source code for the implementation presented in this report is available on GitHub:
+\href{https://github.com/martavise/Seminar_RLDMUU_AI_agents_contracts}{martavise/Seminar\_RLDMUU\_AI\_agents\_contracts}.
 \subsection{Deep Q-learning}
 \begin{algorithm}[H]
   \caption{Deep Q-learning}
