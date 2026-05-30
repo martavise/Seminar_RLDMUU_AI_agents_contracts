@@ -239,6 +239,7 @@ Consequently, the learned policies approximate an SPE empirically through repeat
 
 \section{Algorithms}
 \textbf{Environment}\\
+\label{sec:simple}
 In a first setting, the implemented algorithms perform over a simple initialization of the hidden-action principal-agent MDP as presented in the paper \cite{ivanov2024principal}.The stochastic game is modeled as an infinite-horizon discounted interaction. 
 \begin{figure} [H]
     \centering
@@ -371,10 +372,45 @@ y^{p}(s,a^{p}) = r^{p} - b^{*}(s,a^{p},o)
 \paragraph{Training Setup}
 Both networks consist of two hidden layers with 256 neurons and ReLU activations, and are trained simultaneously from a replay buffer of size 20\,000 with mini-batches of 128, following the suggestions of \cite{ivanov2024principal}.
 Target networks are updated every 100 iterations. The learning rate and exploration rate $\epsilon$ are annealed from $0.001$ to $0.0001$ and from $1$ to $0$, respectively.
+
+
 \section{Results}
 \subsection{Replication of original results}
 
 \subsection{Performance over randomized MDPs}
+To further evaluate our implementation, we extend the experimental setting and perform additional empirical evaluations. In particular, we investigate the learning quality of the proposed algorithms. We compare the learning-based approaches (Q-learning and Deep Q-learning) against the value-iteration meta-algorithm, which serves as an oracle baseline.\\
+The comparison is conducted over 100 randomly generated MDPs. Each MDP shares the same structure as the one presented in Section~\ref{sec:simple}, while the transition probabilities are randomized independently for every experiment instance. More precisely, the outcome probabilities are sampled from a Dirichlet distribution for each state-action pair.\\
+For each randomized MDP, both the oracle method and the learning-based algorithms optimize the principal's policy. From these runs, we extract the induced policies, the principal's expected utility, and the corresponding regret, computed with respect to the oracle solution.
+
+
+The \textbf{Q-learning experiments }are run with the following hyperparameters. We consider $N_{\mathrm{MDP}} = 100$ independent MDP instances to average performance across environments and reduce variance. The discount factor is set to $\gamma = 1$, implying no temporal discounting and equal weighting of future and immediate rewards. Each experiment consists of $N_{\mathrm{META}} = 20$ meta-iterations, where each iteration corresponds to a full round of training the principal-agent interaction. Within each meta-iteration, the learning process is carried out over $N_{\mathrm{EPISODES}} = 5000$ episodes. The learning rate for Q-updates is set to $\alpha = 0.1$, and an $\epsilon$-greedy exploration strategy is used with $\epsilon = 0.1$ to balance exploration and exploitation for both the principal and the agent.
+\begin{figure}[H]
+\centering
+
+\IfFileExists{figures/policies_100Qlearn.png}{%
+  \includegraphics[width=0.8\linewidth]{figures/policies_100Qlearn.png}
+}{%
+  \todofig{Place figures/policies\_100Qlearn.pn here.}
+}
+
+\vspace{0.5em}
+
+\IfFileExists{figures/utilitydistr_100qlearn.png}{%
+  \includegraphics[width=0.8\linewidth]{figures/utilitydistr_100qlearn.png}
+}{%
+  \todofig{Place figures/utilitydistr_100qlearn.png here.}
+}
+\vspace{0.5em}
+
+\IfFileExists{figures/regretdistr_100qlearn.png}{%
+  \includegraphics[width=0.8\linewidth]{figures/regretdistr_100qlearn.png}
+}{%
+  \todofig{Place figures/regretdistr_100qlearn.png here.}
+}
+\caption{Comparison between oracle and Q-learning}
+\label{fig:single}
+\end{figure}
+
 
 \subsection{Application of linear contracts}
 
@@ -434,6 +470,24 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 \subsection{Source code}
 The source code for the implementation presented in this report is available on GitHub:
 \href{https://github.com/martavise/Seminar_RLDMUU_AI_agents_contracts}{martavise/Seminar\_RLDMUU\_AI\_agents\_contracts}.
+\subsection{Meta-algorithm}
+\begin{algorithm}
+  \caption{Meta-algorithm for finding SPE}
+  \label{alg:spe-meta}
+  \begin{algorithmic}
+    \STATE \textbf{Require:} principal policy $\rho$, agent policy $\pi$
+    \STATE Initialize the principal’s policy $\rho$ arbitrarily (e.g., $\forall s \in S: \rho(s) = 0$)
+    
+    \WHILE{$\rho$ not converged}
+      \STATE Solve the agent’s MDP: find $\pi := \pi^{*}(\rho)$
+      \STATE Solve the principal’s MDP: find $\rho := \rho^{*}(\pi)$
+    \ENDWHILE
+    
+    \STATE \textbf{return} $(\rho, \pi)$
+  \end{algorithmic}
+\end{algorithm}
+
+
 \subsection{Deep Q-learning}
 \begin{algorithm}[H]
   \caption{Deep Q-learning}
