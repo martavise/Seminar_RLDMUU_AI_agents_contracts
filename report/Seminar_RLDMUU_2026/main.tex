@@ -259,6 +259,7 @@ In the outer optimization, the principal computes contracts that maximize its ow
 This iterative process continues until the policies of both players stabilize. The resulting strategy profile approximates a Subgame Perfect Equilibrium (SPE), in which neither the principal nor the agent has an incentive to deviate at any reachable state of the stochastic game. 
 
 \subsection{Qlearning}
+\label{subsec:Qlearning}
 Starting from the setting defined in the meta-algorithm, we apply reinforcement learning to approximate the equilibrium through repeated interactions with the environment. The underlying MDP remains the same as the one described in Section~\ref{subsec:MDP}, but both the inner and outer optimization problems are now solved using Q-learning. \\
 The framework consists of two independent learners:
 the agent learns which action to execute under a given contract, while the principal learns which action to incentivize and which contract induces the desired behaviour at minimal cost.
@@ -374,31 +375,28 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 \subsection{Linear Contracts}
 \label{subsec:linear_contracts}
 
-A linear contract ties the agent’s payment directly to the principal’s outcome reward via a single sharing parameter $\alpha \in [0,1]$:
-\[
-  b(o) = \alpha \cdot r^p(s, o).
-\]
-Instead of allowing an arbitrary payment per outcome, the principal commits to giving the agent a fixed fraction $\alpha$ of its own reward. This restricts the contract space to a one-dimensional family, which makes contract design substantially simpler.
+A linear contract is parameterised by a single sharing ratio $\alpha \in [0,1]$: the agent receives a fixed fraction $\alpha$ of the principal’s realised reward, and the principal retains $(1-\alpha)$. Formally, $b(o) = \alpha \cdot r^p(s, o)$. Rather than assigning an arbitrary payment to each outcome, the contract space is collapsed to a single scalar.
 
-\paragraph{Replacing the LP with a grid search.}
-In the standard Q-learning principal, finding the cheapest incentive-compatible contract requires solving a linear program at every timestep. Under linear contracts, this is replaced by a grid search: the principal evaluates 100 evenly spaced values $\alpha \in \{0, \frac{1}{99}, \frac{2}{99}, \ldots, 1\}$ and selects the best feasible one, requiring no LP solver.
-
-\paragraph{Incentive compatibility check.}
-For each candidate $\alpha$, the induced contract is $b_\alpha(o) = \alpha \cdot r^p(s,o)$. The principal checks whether $b_\alpha$ incentivizes the target action $a^p$ over all alternatives:
+\paragraph{Incentive compatibility}
+The contract is incentive compatible for the recommended action $a^p$ if:
 \[
-  \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[b_\alpha(o)] + \bar{Q}(s,a^p)
-  \;\geq\;
-  \mathbb{E}_{o \sim \mathcal{O}(s,a)}[b_\alpha(o)] + \bar{Q}(s,a)
+\begin{aligned}
+  &\alpha \cdot \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r^p(s,o)] + \bar{Q}(s,a^p) \\
+  &\quad \geq\; \alpha \cdot \mathbb{E}_{o \sim \mathcal{O}(s,a)}[r^p(s,o)] + \bar{Q}(s,a)
   \quad \forall\, a \neq a^p,
+\end{aligned}
 \]
-where $\bar{Q}(s,a)$ is the agent’s current Q-estimate. If the constraint is violated for any $a$, the candidate $\alpha$ is discarded.
+where $\bar{Q}(s,a)$ is the agent’s Q-estimate of long-term payoff net of payments. Any candidate $\alpha$ that violates this constraint is discarded.
 
-\paragraph{Selecting the best $\alpha^*$.}
-Among all IC-feasible candidates, the principal selects the one that maximises its own expected net utility:
+\paragraph{Principal’s optimization}
+The principal performs a grid search over 100 evenly spaced values of $\alpha$ and selects the incentive-compatible candidate that maximises its expected net revenue:
 \[
-  \alpha^* = \arg\max_{\alpha \,\text{IC-feasible}} \;(1 - \alpha) \cdot \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r^p(s,o)].
+  \alpha^* = \arg\max_{\alpha \;\text{IC-feasible}} \;(1 - \alpha) \cdot \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r^p(s,o)].
 \]
-The factor $(1-\alpha)$ reflects the share of the principal’s reward that is not transferred to the agent. If no feasible $\alpha$ exists, the zero contract $b \equiv 0$ is returned. All other aspects of the Q-learning update — agent learning, principal Q-table update — remain unchanged from Section~\ref{subsec:Qlearning}.
+If no feasible $\alpha$ exists, the principal offers the null contract $b \equiv 0$.
+
+\paragraph{Approximation bound}
+\citet{dutting2019simple} show that the worst-case approximation ratio $\rho$ between the optimal LP contract and the best linear contract is at most $n$, the number of \emph{actions} (Theorem 4.3 in \citealt{dutting2024survey}). With $n = 2$ actions, $\rho \leq 2$. In binary-outcome settings where one outcome has zero reward, a linear contract is in fact optimal and $\rho = 1$ \citep{dutting2021binary}.
 
 \section{Results and discussion}
 \subsection{Replication of original results}
@@ -491,23 +489,23 @@ Despite the higher regret, the cumulative regret curves exhibit more pronounced 
 \subsection{Application of Linear Contracts}
 \label{subsec:results_linear}
 
-We compare the principal’s utility under two contract designs: the LP-based contract from Section~\ref{subsec:Qlearning} and the linear contract from Section~\ref{subsec:linear_contracts}. Both use the same Q-learning framework and are evaluated on the same MDP across three random seeds (42, 123, 456), each trained for 3\,000 episodes. Performance is measured as the mean principal utility over the last 50 episodes, and the gap ratio $\rho = U_{\mathrm{LP}} / U_{\mathrm{Linear}}$.
+We evaluate both contract designs on 30 randomly generated MDPs. As noted in Section~\ref{subsec:linear_contracts}, the original fixed MDP has $r^p(s,R) = 0$, which by Proposition 3.9 \citep{dutting2021binary} makes a linear contract already optimal. We therefore randomise all MDP parameters while keeping the same structure (2 actions, 2 outcomes, 1 non-terminal state): transition probabilities are Dirichlet-sampled, action costs are drawn uniformly from $[0,1]$, and principal rewards from $[0,2]$. For each instance, the Q-learning agent is trained once; both contract methods are then evaluated from the same learned Q-values, with expected utilities computed analytically from the known transition probabilities. This isolates the effect of contract design from learning variance. The approximation ratio $\rho = U_{\mathrm{LP}} / U_{\mathrm{Linear}}$ shows the cost of restricting to linear contracts. The bound $\rho \leq 2$ from Section~\ref{subsec:linear_contracts} was established for the static model; we verify whether this applies to the Q-learning setting.
 
 \begin{table}[ht]
-  \caption{Principal utility and gap ratio, LP vs.\ linear contracts.}
+  \caption{Principal utility and approximation ratio $\rho$ across 30 random MDPs.}
   \label{tab:linear_results}
   \begin{center}
     \begin{small}
       \begin{sc}
-        \begin{tabular}{lccc}
+        \begin{tabular}{lcc}
           \toprule
-          Seed & LP & Linear & Gap ratio \\
+           & Mean & Std \\
           \midrule
-          42   & 0.48 & 0.47 & 1.01 \\
-          123  & 0.47 & 0.46 & 1.01 \\
-          456  & 0.53 & 0.53 & 1.01 \\
+          $U_{\mathrm{LP}}$ (unrestricted) & 1.1256 & 0.4248 \\
+          $U_{\mathrm{Linear}}$             & 1.1029 & 0.4116 \\
+          Approximation ratio $\rho$        & 1.0198 & 0.0929 \\
           \midrule
-          Theoretical bound & \multicolumn{2}{c}{—} & $\leq 2.00$ \\
+          Theoretical bound ($n=2$ actions) & \multicolumn{2}{c}{$\rho \leq 2$} \\
           \bottomrule
         \end{tabular}
       \end{sc}
@@ -516,22 +514,7 @@ We compare the principal’s utility under two contract designs: the LP-based co
   \vskip -0.1in
 \end{table}
 
-Across all seeds the gap ratio is $1.01$, meaning linear contracts recover essentially all of the principal’s utility that the LP achieves. This is well within the worst-case bound of $n = 2$ for two outcomes established by \cite{dutting2019simple}.
-
-The near-perfect match has a structural explanation. In our MDP the principal reward is $r^p(s,o) = \tfrac{14}{9}$ for outcome $L$ and $r^p(s,o) = 0$ for outcome $R$. The linear contract therefore always sets $b(R) = \alpha \cdot 0 = 0$. As shown in Figure~\ref{fig:lp_linear_space}, the IC-feasible region in the $(b_L, b_R)$ contract space already has its cost-minimising vertex at $b_R = 0$, so the LP optimal contract coincides with the best linear contract. Linear contracts are not merely a tractable approximation in this setting — they are exact.
-
-\begin{figure}[ht]
-  \vskip 0.2in
-  \begin{center}
-    \centerline{\includegraphics[width=\columnwidth]{figures/slide1_bound}}
-    \caption{
-      \textbf{Left:} IC-feasible region in the $(b_L, b_R)$ contract space. The LP optimal contract (star) lies on the line $b_R = 0$, which is exactly the linear contract family.
-      \textbf{Right:} Gap ratio across three seeds, all $\approx 1.01$, far below the theoretical bound of $2$ \citep{dutting2019simple}.
-    }
-    \label{fig:lp_linear_space}
-  \end{center}
-  \vskip -0.1in
-\end{figure}
+The mean approximation ratio of $\rho = 1.02$ (std $= 0.09$) indicates that linear contracts recover $98\%$ of the principal’s utility on average, well within the worst-case bound of $2$.
 
 
 
