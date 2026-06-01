@@ -153,7 +153,7 @@ The principal-agent interaction is formulated as a Markov Decision Process (MDP)
 
 \subsection{Hidden-Action Principal-Agent MDP}
 \label{subsec:MDP}
-The Principal-Agent MDP is defined as
+The principal-agent MDP is defined as
 \begin{equation}
 M = (S, s_{0}, A, B, O, \mathcal{O}, \mathcal{R}, \mathcal{R^p}, \mathcal{T}, \gamma)
 \end{equation}
@@ -161,12 +161,12 @@ M = (S, s_{0}, A, B, O, \mathcal{O}, \mathcal{R}, \mathcal{R^p}, \mathcal{T}, \g
 Here, $S$ denotes the set of all states and $s_0 \in S$ the initial state. 
 $A$ represents the set of possible actions available to the agent, while $B$ denotes the set of actions of the principal. The actions of the principal correspond to contracts $b(o)$ offered depending on observable outcomes.
 
-The set of all possible outcomes is described by $O$. If the Agent executes an action $a \in A$, an outcome $o \in O$ is generated stochastically. This is modeled by the outcome function
+The set of all possible outcomes is described by $O$. If the agent executes an action $a \in A$, an outcome $o \in O$ is generated stochastically. This is modeled by the outcome function
 \[
 \mathcal{O}: S \times A \xrightarrow{} \Delta(O).
 \]
 
-Higher effort by the Agent can lead to better outcomes, although the results remain probabilistic rather than deterministic.
+Higher effort by the agent can lead to better outcomes, although the results remain probabilistic rather than deterministic.
 
 Based on the observed outcome and the current state, the environment transitions into the next state:
 \[
@@ -184,13 +184,13 @@ The reward function of the agent is defined as
 \]
 where $r(s,a)$ represents the intrinsic reward of the selected action and $b(o)$ the payment specified by the contract. The agent therefore aims to learn a strategy that maximizes its long-term reward.
 
-The reward of the Principal is defined by
+The reward of the principal is defined by
 \[
 \mathcal{R}^{p}(s,b,o) = r^p(s,o) - b(o).
 \]
-The Principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
+The principal receives a reward depending on the resulting outcome, but simultaneously has to pay the contractual compensation to the agent.
 
-The term Hidden-Action refers to the fact that the actual action chosen by the Agent is not directly observable to the Principal. The Principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
+The term Hidden-Action refers to the fact that the actual action chosen by the agent is not directly observable to the principal. The principal only observes the resulting outcome $o \in O$, which depends probabilistically on the selected action. Consequently, contracts are based on observable outcomes rather than directly on the agent's actions. As a result, the reward of the principal only depends indirectly on the agent's action and is modeled solely through the outcome.
 
 The parameter $\gamma \in [0,1]$ denotes the discount factor, which determines the importance of future rewards compared to immediate rewards.
 
@@ -213,10 +213,10 @@ This interaction is repeated sequentially, while both parties attempt to maximiz
 
 The solution of the stochastic game is described in Section~\ref{subsec:meta_algorithm}.
 
-\subsection{Incentive compatibility and individual rationality}
+\subsection{Incentive Compatibility and Individual Rationality}
 Two standard constraints from contract theory govern the design of feasible contracts in this setting.
 
-\textbf{Incentive compatibility (IC)} requires that the contract makes the agent willing to choose the action desired by the principal. Formally, for a recommended action $a^p \in A$, the contract $b$ must satisfy
+\textbf{Incentive Compatibility (IC)} requires that the contract makes the agent willing to choose the action desired by the principal. Formally, for a recommended action $a^p \in A$, the contract $b$ must satisfy
 \[
 \begin{aligned}
 &\mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r(s,a^p) + b(o)] \\
@@ -225,7 +225,7 @@ Two standard constraints from contract theory govern the design of feasible cont
 \]
 ensuring that the agent's expected utility under $a^p$ is at least as large as under any deviation.
 
-\textbf{Individual rationality (IR)} requires that the agent's expected utility under the contract is non-negative, i.e., that participation is preferable to opting out:
+\textbf{Individual Rationality (IR)} requires that the agent's expected utility under the contract is non-negative, i.e., that participation is preferable to opting out:
 \[
 \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r(s,a^p) + b(o)] \geq 0.
 \]
@@ -265,7 +265,9 @@ In a first setting, the implemented algorithms perform over a simple initializat
     \label{fig:placeholder}
 \end{figure}
 The MDP has three states $S=\{s_0,s_L,s_R\}$, at each the agent can chose between two actions $A=\{a_L,a_R\}$ who can lead to a specific outcome $O=\{L,R\}$. The distribution of outcome L taking action $a_L$ is of 0.9, while taking action $a_R$ it is of 0.1; the distribution of outcome R is of 0.9 when taking action $a_R$ and of 0.1 when taking action $a_L$.\\ 
-Agent and principal have different rewards for a certain outcome at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while the agent has reward -$4\over5$ making it costly for the agent but beneficial for the principal. At $(s,R)$ both the agent and the principal have reward $0$. 
+
+Agent and principal have different rewards for a certain outcome or action at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while at $(s,R)$ his reward is $0$. The agent's intrinsic reward is $r(s,a_L) = −\frac{4}{5}$, making action $a_L$ costly, while $r(s,a_R) = 0$
+
 
 \subsection{Meta-algorithm}
 \label{subsec:meta_algorithm}
@@ -278,17 +280,17 @@ In this setting, both actors are assumed to have complete knowledge of the envir
 
 The algorithm alternates between two optimization steps.
 In the inner optimization, the agent computes a best-response policy maximizing its expected long-term utility under the currently offered contracts.
-In the outer optimization, the principal computes contracts that maximize its own expected utility while incentivizing the agent to follow the desired behaviour.
+In the outer optimization, the principal computes the contract that maximizes its own expected utility given the agent's current best-response policy.
 
 
 This iterative process continues until the policies of both players stabilize. The resulting strategy profile approximates a Subgame Perfect Equilibrium (SPE), in which neither the principal nor the agent has an incentive to deviate at any reachable state of the stochastic game. 
 
-\subsection{Qlearning}
+\subsection{Q-Learning}
 \label{subsec:Qlearning}
 Starting from the setting defined in the meta-algorithm, we apply reinforcement learning to approximate the equilibrium through repeated interactions with the environment. The underlying MDP remains the same as the one described in Section~\ref{subsec:MDP}, but both the inner and outer optimization problems are now solved using Q-learning. \\
 The framework consists of two independent learners:
 the agent learns which action to execute under a given contract, while the principal learns which action to incentivize and which contract induces the desired behaviour at minimal cost.
-\paragraph{Agent Q-learning}
+\paragraph{Agent Q-Learning}
 
 The agent observes the current state $s$ together with the contract $b$ offered by the principal and learns a policy
 \[
@@ -320,7 +322,7 @@ r(s,a)
 Action selection is performed using an $\epsilon$-greedy exploration strategy.
 With probability $\epsilon$, a random action is selected, while otherwise the agent chooses the action with maximal estimated utility.
 
-\paragraph{Principal Q-learning}
+\paragraph{Principal Q-Learning}
 
 The principal simultaneously learns which action should be induced in each state.
 Instead of directly learning contracts, the principal maintains a Q-table
@@ -402,7 +404,7 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 
 A linear contract is parameterised by a single sharing ratio $\alpha \in [0,1]$: the agent receives a fixed fraction $\alpha$ of the principal’s realised reward, and the principal retains $(1-\alpha)$. Formally, $b(o) = \alpha \cdot r^p(s, o)$. Rather than assigning an arbitrary payment to each outcome, the contract space is collapsed to a single scalar.
 
-\paragraph{Incentive compatibility}
+\paragraph{Incentive Compatibility}
 The contract is incentive compatible for the recommended action $a^p$ if:
 \[
 \begin{aligned}
@@ -413,18 +415,18 @@ The contract is incentive compatible for the recommended action $a^p$ if:
 \]
 where $\bar{Q}(s,a)$ is the agent’s Q-estimate of long-term payoff net of payments. Any candidate $\alpha$ that violates this constraint is discarded.
 
-\paragraph{Principal’s optimization}
+\paragraph{Principal’s Optimization}
 The principal performs a grid search over 100 evenly spaced values of $\alpha$ and selects the incentive-compatible candidate that maximises its expected net revenue:
 \[
   \alpha^* = \arg\max_{\alpha \;\text{IC-feasible}} \;(1 - \alpha) \cdot \mathbb{E}_{o \sim \mathcal{O}(s,a^p)}[r^p(s,o)].
 \]
 If no feasible $\alpha$ exists, the principal offers the null contract $b \equiv 0$.
 
-\paragraph{Approximation bound}
+\paragraph{Approximation Bound}
 \citet{dutting2019simple} show that the worst-case approximation ratio $\rho$ between the optimal LP contract and the best linear contract is at most $n$, the number of \emph{actions} (Theorem 4.3 in \citealt{dutting2024survey}). With $n = 2$ actions, $\rho \leq 2$. In binary-outcome settings where one outcome has zero reward, a linear contract is in fact optimal and $\rho = 1$ \citep{dutting2021binary}.
 
-\section{Results and discussion}
-\subsection{Replication of original results}
+\section{Results and Discussion}
+\subsection{Replication of Original Results}
 We first reproduce the experimental setting proposed in \citet{ivanov2024principal} in order to validate our implementation of the principal-agent framework and verify the convergence behaviour of the proposed algorithms.\\
 The experiments are conducted on the same hidden-action principal-agent MDP described in Section~\ref{sec:simple}. In this setting, the principal iteratively optimizes contracts while the agent learns a best-response policy. Following the original paper, we evaluate whether the learning dynamics converge toward a Subgame Perfect Equilibrium (SPE), and compare the learned utilities against the oracle solution obtained through value iteration.\\
 Our implementation successfully reproduces the main qualitative findings reported in the original work. In the fully observable setting, the meta-algorithm consistently converges toward stable policies for both the principal and the agent. The resulting utilities closely match the analytical SPE solution, confirming the correctness of the bilevel optimization procedure.\\
@@ -432,7 +434,7 @@ Similarly, the tabular Q-learning implementation empirically converges toward th
 In contrast, the Deep Q-learning implementation exhibits substantially less stable behaviour. While some runs converge toward near-optimal policies, others become trapped in suboptimal equilibria or exhibit oscillatory learning dynamics. Compared to the original paper, our implementation shows higher empirical variance and lower average utility for the principal. We hypothesize that this discrepancy is partly caused by the sensitivity of Deep Q-learning to hyperparameter choices and initialization, as well as the non-stationarity introduced by the contract optimization process itself.\\
 Overall, the experiments confirm the reproducibility of the original framework in the tabular setting while also highlighting the practical challenges of extending the approach to deep function approximation methods.
 
-\subsection{Performance over randomized MDPs}
+\subsection{Performance over Randomized MDPs}
 \label{subsec:replication}
 To further evaluate our implementation, we extend the experimental setting to 100 randomly generated MDPs. Each MDP shares the same structure as the one presented in Section~\ref{sec:simple}, while the transition probabilities are randomized independently for every experiment instance by sampling from a Dirichlet distribution for each state-action pair. For each instance, we extract the induced policies, the principal's expected utility, and the corresponding regret with respect to the oracle solution.
 
@@ -702,8 +704,9 @@ Algorithm from \cite{ivanov2024principal}, page 35.
 % appendix.  Apart from this possible change, the style (font size, spacing,
 % margins, page numbering, etc.) should be kept the same as the main body.
 
-
-
+\subsection{Use of external aid}
+As a code base for the RL algorithms, the lab materials from the RL lecture FS2026 at the University of Neuchâtel were used and adapted to the present setup.
+Claude (claude-sonnet-4-6) was used to assist in writing the linear contracts section, for general code refactoring and corrections, and to verify that the implementation of the functions corresponded to the intended behaviour described in the paper. ChatGPT was used to help rephrase some paragraphs and check general grammar.
 
 
 
