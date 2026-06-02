@@ -490,7 +490,7 @@ Regret \%     & 2.08\% & -- \\
     \label{fig:cumulativeknowledge}
 \end{figure}
 
-The \textbf{Deep Q-learning experiments} follow the same randomized MDP setting, with $N_{MDP}=100, \gamma = 1$, and training performed over 20000 updates with experience replay. As shown in Table~\ref{tab:dqtable}, the mean regret reaches 42.44\%, a dramatic increase relative to the tabular setting. We attribute this degradation primarily to the interaction between function approximation and the bilevel structure of the problem: small estimation errors in early training propagate through the contract optimization step, destabilizing incentives and occasionally causing policy collapse. Notably, despite the higher regret, the cumulative regret curves exhibit more pronounced plateau regions than in the tabular case, suggesting that Deep Q-learning converges prematurely to locally stable but suboptimal incentive structures rather than continuing to make corrective updates over time.
+The \textbf{Deep Q-learning experiments} follow the same randomized MDP setting, with $N_{MDP}=100, \gamma = 1$, and training performed over 20000 iterations with a network update every 100 iterations through experience replay. As shown in Table~\ref{tab:dqtable}, the mean regret reaches 42.44\%, a dramatic increase relative to the tabular setting. We attribute this degradation primarily to the interaction between function approximation and the bilevel structure of the problem: small estimation errors in early training propagate through the contract optimization step, destabilizing incentives and occasionally causing policy collapse. Notably, despite the higher regret, the cumulative regret curves exhibit more pronounced plateau regions than in the tabular case, suggesting that Deep Q-learning converges prematurely to locally stable but suboptimal incentive structures rather than continuing to make corrective updates over time.
 \begin{table}[h]
 \centering
 \begin{tabular}{lcc}
@@ -549,7 +549,7 @@ The mean approximation ratio of $\rho = 1.02$ (std $= 0.09$) indicates that line
 
 
 \section*{Conclusion}
-In this work, we reproduced and extended the principal-agent reinforcement learning framework introduced by \citet{ivanov2024principal}. We first implemented the original meta-algorithm under full knowledge of the environment and subsequently investigated tabular and deep reinforcement learning approaches in settings where the MDP dynamics are not explicitly known.
+In this work, we reproduced and extended the principal-agent reinforcement learning framework by \citet{ivanov2024principal}. We first implemented the original meta-algorithm under full knowledge of the environment and subsequently investigated tabular and deep reinforcement learning approaches in settings where the MDP dynamics are not explicitly known.
 
 Our experiments show that tabular Q-learning successfully approximates the oracle Subgame Perfect Equilibrium across a large set of randomized environments, achieving consistently low empirical regret. These results suggest that incentive-compatible contracts can be learned effectively through repeated interaction even without explicit knowledge of the environment dynamics. Furthermore, we observed that transferring learned Q-values across related MDPs can further improve performance, indicating that incentive structures may generalize across similar environments.
 
@@ -558,6 +558,7 @@ In contrast, Deep Q-learning exhibited significantly higher instability and regr
 Finally, we investigated linear contracts as a restricted yet interpretable contract class. Despite their simplicity, linear contracts recovered nearly all of the utility achieved by unrestricted LP-based contracts in our experiments. This suggests that simple contract structures may provide an effective trade-off between expressiveness, computational tractability, and robustness in reinforcement learning environments.
 
 Overall, our findings support the potential of combining contract theory and reinforcement learning for AI alignment and multi-agent coordination problems, while also highlighting important limitations of current deep reinforcement learning methods in strategic bilevel settings. Future work could investigate more stable deep RL algorithms, partially observable environments, richer contract spaces, and transfer learning mechanisms for incentive design.
+Furthermore, in the present setting the outcome distribution function $\mathcal{O}(s,a)$ is assumed to be known, which may not hold in realistic scenarios. An avenue for future work is therefore to approximate this function through an additional neural network, as suggested in the paper, moving towards settings with less restrictive assumptions on environment knowledge.
 
 
 
