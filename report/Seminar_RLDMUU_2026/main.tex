@@ -266,7 +266,7 @@ In a first setting, the implemented algorithms perform over a simple initializat
 \end{figure}
 The MDP has three states $S=\{s_0,s_L,s_R\}$, at each the agent can chose between two actions $A=\{a_L,a_R\}$ who can lead to a specific outcome $O=\{L,R\}$. The distribution of outcome L taking action $a_L$ is of 0.9, while taking action $a_R$ it is of 0.1; the distribution of outcome R is of 0.9 when taking action $a_R$ and of 0.1 when taking action $a_L$.\\ 
 
-Agent and principal have different rewards for a certain outcome or action at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while at $(s,R)$ his reward is $0$. The agent's intrinsic reward is $r(s,a_L) = −\frac{4}{5}$, making action $a_L$ costly, while $r(s,a_R) = 0$
+Agent and principal have different rewards for a certain outcome or action at state $s \in S$. At $(s,L)$ the principal has reward $14\over9$, while at $(s,R)$ his reward is $0$. The agent's intrinsic reward is $r(s,a_L) = -\frac{4}{5}$, making action $a_L$ costly, while $r(s,a_R) = 0$
 
 
 \subsection{Meta-algorithm}
@@ -402,7 +402,7 @@ Target networks are updated every 100 iterations. The learning rate and explorat
 \subsection{Linear Contracts}
 \label{subsec:linear_contracts}
 
-A linear contract is parameterised by a single sharing ratio $\alpha \in [0,1]$: the agent receives a fixed fraction $\alpha$ of the principal’s realised reward, and the principal retains $(1-\alpha)$. Formally, $b(o) = \alpha \cdot r^p(s, o)$. Rather than assigning an arbitrary payment to each outcome, the contract space is collapsed to a single scalar.
+A linear contract is parameterised by a single sharing ratio $\alpha \in [0,1]$: the agent receives a fixed fraction $\alpha$ of the principal’s realised reward, and the principal retains $(1-\alpha)$. Formally, $b(o) = \alpha \cdot r^p(s, o)$. This reduces the entire contract to a single parameter, rather than a separate payment per outcome.
 
 \paragraph{Incentive Compatibility}
 The contract is incentive compatible for the recommended action $a^p$ if:
@@ -423,7 +423,7 @@ The principal performs a grid search over 100 evenly spaced values of $\alpha$ a
 If no feasible $\alpha$ exists, the principal offers the null contract $b \equiv 0$.
 
 \paragraph{Approximation Bound}
-\citet{dutting2019simple} show that the worst-case approximation ratio $\rho$ between the optimal LP contract and the best linear contract is at most $n$, the number of \emph{actions} (Theorem 4.3 in \citealt{dutting2024survey}). With $n = 2$ actions, $\rho \leq 2$. In binary-outcome settings where one outcome has zero reward, a linear contract is in fact optimal and $\rho = 1$ \citep{dutting2021binary}.
+\citet{dutting2024survey} show that the worst-case approximation ratio $\rho$ between the optimal LP contract and the best linear contract is at most $n$, the number of \emph{actions}. With $n = 2$ actions, $\rho \leq 2$. In binary-outcome settings where one action has reward 0, a linear contract is in fact optimal and $\rho = 1$; more generally, as the reward for one action approaches zero, $\rho \to 1$.
 
 \section{Results and Discussion}
 \subsection{Replication of Original Results}
@@ -518,7 +518,7 @@ Regret \%     & 42.44\% & -- \\
 \subsection{Application of Linear Contracts}
 \label{subsec:results_linear}
 
-We evaluate both contract designs on 30 randomly generated MDPs. As noted in Section~\ref{subsec:linear_contracts}, the original fixed MDP has $r^p(s,R) = 0$, which by Proposition 3.9 \citep{dutting2021binary} makes a linear contract already optimal. We therefore randomise all MDP parameters while keeping the same structure (2 actions, 2 outcomes, 1 non-terminal state): transition probabilities are Dirichlet-sampled, action costs are drawn uniformly from $[0,1]$, and principal rewards from $[0,2]$. For each instance, the Q-learning agent is trained once; both contract methods are then evaluated from the same learned Q-values, with expected utilities computed analytically from the known transition probabilities. This isolates the effect of contract design from learning variance. The approximation ratio $\rho = U_{\mathrm{LP}} / U_{\mathrm{Linear}}$ shows the cost of restricting to linear contracts. The bound $\rho \leq 2$ from Section~\ref{subsec:linear_contracts} was established for the static model; we verify whether this applies to the Q-learning setting.
+We evaluate both contract designs on 30 randomly generated MDPs. As noted in Section~\ref{subsec:linear_contracts}, the original fixed MDP has $r^p(s,R) = 0$, which by Proposition 3.9 \citep{dutting2024survey} makes a linear contract already optimal. We therefore randomise all MDP parameters while keeping the same structure (2 actions, 2 outcomes, 1 non-terminal state): transition probabilities are Dirichlet-sampled, action costs are drawn uniformly from $[0,1]$, and principal rewards from $[0,2]$. For each instance, the Q-learning agent is trained once; both contract methods are then evaluated from the same learned Q-values, with expected utilities computed analytically from the known transition probabilities, so that any observed difference in utility reflects the contract structure rather than training variance. The approximation ratio $\rho = U_{\mathrm{LP}} / U_{\mathrm{Linear}}$ shows the cost of restricting to linear contracts. The bound $\rho \leq 2$ from Section~\ref{subsec:linear_contracts} was established for the static model; we verify whether this applies to the Q-learning setting.
 
 \begin{table}[ht]
   \caption{Principal utility and approximation ratio $\rho$ across 30 random MDPs.}
@@ -543,7 +543,7 @@ We evaluate both contract designs on 30 randomly generated MDPs. As noted in Sec
   \vskip -0.1in
 \end{table}
 
-The mean approximation ratio of $\rho = 1.02$ (std $= 0.09$) indicates that linear contracts recover approximately $98\%$ of the principal’s utility on average, far below the theoretical worst-case bound of $2$. This aligns with the result of \citet{dutting2021binary}, showing that in binary-outcome settings where one outcome has zero reward, linear contracts are optimal ($\rho = 1$). Since our environments retain a similar low-dimensional reward structure, the empirical ratios remain very close to $1$.
+The mean approximation ratio of $\rho = 1.02$ (std $= 0.09$) indicates that linear contracts recover approximately $98\%$ of the principal’s utility on average, far below the theoretical worst-case bound of $2$. As expected from \citet{dutting2024survey}, in binary-outcome settings where one action has reward 0 the linear contract is already optimal ($\rho = 1$), and our randomised environments are close enough to this structure that the empirical ratios stay near $1$.
 
 
 
@@ -555,7 +555,7 @@ Our experiments show that tabular Q-learning successfully approximates the oracl
 
 In contrast, Deep Q-learning exhibited significantly higher instability and regret. We argue that this degradation originates from the interaction between function approximation and the bilevel optimization structure of the principal-agent problem. Because the principal continuously modifies the reward landscape through contracts, the agent faces a highly non-stationary learning objective, which may amplify approximation errors and lead to premature convergence toward suboptimal equilibria.
 
-Finally, we investigated linear contracts as a restricted yet interpretable contract class. Despite their simplicity, linear contracts recovered nearly all of the utility achieved by unrestricted LP-based contracts in our experiments. This suggests that simple contract structures may provide an effective trade-off between expressiveness, computational tractability, and robustness in reinforcement learning environments.
+Finally, we investigated linear contracts, which restrict the contract space to a single sharing parameter. In our experiments, they recovered nearly all of the utility achieved by unrestricted LP-based contracts. The results suggest that, at least in low-dimensional settings, the gain from using more expressive contracts is small, and the simplicity of linear contracts may be worth the minor loss in principal utility.
 
 Overall, our findings support the potential of combining contract theory and reinforcement learning for AI alignment and multi-agent coordination problems, while also highlighting important limitations of current deep reinforcement learning methods in strategic bilevel settings. Future work could investigate more stable deep RL algorithms, partially observable environments, richer contract spaces, and transfer learning mechanisms for incentive design.
 Furthermore, in the present setting the outcome distribution function $\mathcal{O}(s,a)$ is assumed to be known, which may not hold in realistic scenarios. An avenue for future work is therefore to approximate this function through an additional neural network, as suggested in the paper, moving towards settings with less restrictive assumptions on environment knowledge.
@@ -565,7 +565,7 @@ Furthermore, in the present setting the outcome distribution function $\mathcal{
 % old structure: 
 % \section{Related Work}
 % \subsection{Contract Theory}
-% \cite{dutting2019simple}
+% \cite{dutting2024survey}
 % \subsection{Multi-Agent Reinforcement Learning}
 % % \subsection{Principal-Agent RL}
 
